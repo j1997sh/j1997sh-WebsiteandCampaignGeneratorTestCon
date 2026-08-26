@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Surveys | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-0835"></head>
+<body class="app-body"><div class="app-shell"><aside class="app-sidebar">
+      <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Client dashboard</small></span></div>
+      <div class="workspace-select">
+        <strong id="sidebarSiteName">Joe Bloggs</strong><small id="sidebarSiteMeta">Bloggs Ward · Councillor Lite</small>
+      </div>
+      <nav class="side-nav"><a class="" href="dashboard.html">Dashboard</a><a class="" href="websites.html">Websites</a><a href="campaigns.html">Campaigns</a><a href="creative.html">Creative</a><a class="" href="people.html">People</a><a class="active" href="surveys.html">Surveys</a><a class="" href="domains.html">Domains</a><a href="integrations.html">Integrations</a><a class="" href="settings.html">Settings</a></nav>
+      <div class="side-bottom">
+        <div class="user-chip"><span class="avatar">JB</span><span><strong>Joe Bloggs</strong><small>Account owner</small></span></div>
+        <a class="side-nav logout-link" style="padding:10px 12px;display:block" href="login.html" id="logoutLink">Log out</a>
+      </div>
+    </aside><main class="app-main"><header class="app-topbar"><h1>Surveys</h1>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="global-search-wrap">
+            <input class="global-search-input" id="globalSearchInput" placeholder="Search people or websites">
+            <span class="global-search-kbd">⌘K</span>
+            <div class="search-popover" id="globalSearchPopover"></div>
+          </div>
+          <a class="btn secondary small" href="public-site.html">View public site</a>
+        </div></header><div class="app-content">
+<div id="surveyLibraryView">
+  <div class="page-intro"><div><h2>Surveys</h2><p>Create and manage multiple surveys for this campaign.</p></div><button class="btn small" id="newSurveyBtn">New survey</button></div>
+  <div class="survey-library-grid" id="surveyLibraryGrid"></div>
+</div>
+<div id="surveyEditorView" style="display:none">
+  <div class="page-intro"><div><button class="text-button" id="backToSurveyLibrary">← All surveys</button><h2 id="surveyEditorName">Survey</h2><p>Build the questions and review the results.</p></div><button class="btn small" id="saveSurveyBtn">Save survey</button></div>
+  <div class="survey-tabs"><button class="survey-tab active" data-tab="questions">Questions</button><button class="survey-tab" data-tab="results">Results</button></div>
+  <section class="survey-panel active" id="surveyQuestionsPanel"><div class="dashboard-grid"><div><div class="question-builder" id="questionBuilder"></div><div class="add-question-menu">
+    <button data-add-q="text">+ Open text</button><button data-add-q="single">+ Single choice</button><button data-add-q="multi">+ Multiple choice</button><button data-add-q="yesno">+ Yes / No</button><button data-add-q="rating">+ Rating 1–5</button><button data-add-q="postcode">+ Postcode</button><button data-add-q="phone">+ Phone</button>
+  </div></div><aside class="survey-preview"><h3>Website survey preview</h3><div id="surveyBuilderPreview"></div></aside></div></section>
+  <section class="survey-panel" id="surveyResultsPanel"><div class="kpi-grid"><div class="card kpi"><strong>7</strong><span>Responses</span></div><div class="card kpi"><strong>6</strong><span>Email opt-ins</span></div><div class="card kpi"><strong>3</strong><span>Voting intention known</span></div><div class="card kpi"><strong>4</strong><span>Volunteers</span></div></div></section>
+</div>
+</div></main></div><script src="assets/js/app.js?v=20260826-0835"></script></body></html>

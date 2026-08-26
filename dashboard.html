@@ -1,0 +1,52 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-0835"></head>
+<body class="app-body"><div class="app-shell"><aside class="app-sidebar">
+      <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Client dashboard</small></span></div>
+      <div class="workspace-select">
+        <strong id="sidebarSiteName">Joe Bloggs</strong><small id="sidebarSiteMeta">Bloggs Ward · Councillor Lite</small>
+      </div>
+      <nav class="side-nav"><a class="active" href="dashboard.html">Dashboard</a><a class="" href="websites.html">Websites</a><a href="campaigns.html">Campaigns</a><a href="creative.html">Creative</a><a class="" href="people.html">People</a><a class="" href="surveys.html">Surveys</a><a class="" href="domains.html">Domains</a><a href="integrations.html">Integrations</a><a class="" href="settings.html">Settings</a></nav>
+      <div class="side-bottom">
+        <div class="user-chip"><span class="avatar">JB</span><span><strong>Joe Bloggs</strong><small>Account owner</small></span></div>
+        <a class="side-nav logout-link" style="padding:10px 12px;display:block" href="login.html" id="logoutLink">Log out</a>
+      </div>
+    </aside><main class="app-main"><header class="app-topbar"><h1>Dashboard</h1>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="global-search-wrap">
+            <input class="global-search-input" id="globalSearchInput" placeholder="Search people or websites">
+            <span class="global-search-kbd">⌘K</span>
+            <div class="search-popover" id="globalSearchPopover"></div>
+          </div>
+          <a class="btn secondary small" href="public-site.html">View public site</a>
+        </div></header><div class="app-content">
+<div class="mobile-admin-note">Dashboard and supporter data are fully usable on mobile.</div><div class="page-intro"><div><h2>Good afternoon, Joe.</h2><p>Here’s what is happening across your campaign.</p></div><a class="btn small" href="editor.html">Edit website</a></div>
+<div class="empty-state-card" id="dashboardEmptyState" style="display:none">
+      <h3>Your campaign is ready for its first supporter.</h3>
+      <p>Publish the website, share the survey and campaign links, and new signups will appear here automatically.</p>
+      <a class="btn small" href="websites.html">Open website</a>
+    </div>
+    <div id="dashboardDataWrap"><div class="kpi-grid">
+<div class="card kpi"><strong>428</strong><span>Supporters</span></div>
+<div class="card kpi"><strong>184</strong><span>Survey responses</span></div>
+<div class="card kpi"><strong>96</strong><span>Campaign backers</span></div>
+<div class="card kpi"><strong>31</strong><span>Volunteer offers</span></div>
+</div>
+<div class="dashboard-grid">
+<section class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Supporter growth</h3><span class="tag green">+47 this week</span></div><div class="chart-bars">
+<div class="bar" style="height:28%"></div><div class="bar" style="height:34%"></div><div class="bar" style="height:41%"></div><div class="bar" style="height:39%"></div><div class="bar" style="height:55%"></div><div class="bar" style="height:63%"></div><div class="bar current" style="height:82%"></div>
+</div><div style="display:flex;justify-content:space-between;margin-top:8px;color:var(--muted);font-size:11px"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></section>
+<section class="panel"><h3>Top issues</h3>
+<div class="issue-row"><span>Roads</span><div class="progress"><span style="width:88%"></span></div><strong>122</strong></div>
+<div class="issue-row"><span>Crime</span><div class="progress"><span style="width:63%"></span></div><strong>87</strong></div>
+<div class="issue-row"><span>Services</span><div class="progress"><span style="width:47%"></span></div><strong>64</strong></div>
+<div class="issue-row"><span>Parking</span><div class="progress"><span style="width:33%"></span></div><strong>45</strong></div>
+</section></div>
+<div class="dashboard-grid">
+<section class="panel"><h3>Recent supporter activity</h3>
+<div class="activity-list">
+<div class="activity-row"><strong>Sarah Smith backed “Save the Bloggs Ward bus”</strong><small>8 minutes ago · Facebook / bus ad</small></div>
+<div class="activity-row"><strong>Tom Williams completed the residents survey</strong><small>23 minutes ago · Organic</small></div>
+<div class="activity-row"><strong>Aisha Khan offered to deliver leaflets</strong><small>41 minutes ago · Email</small></div>
+<div class="activity-row"><strong>David Brown joined the campaign</strong><small>1 hour ago · Direct</small></div>
+</div></section>
+<section class="panel"><h3>Website</h3><p><span class="tag green">Published</span></p><p><strong>joe-bloggs.example.org</strong></p><p class="muted">Last updated today at 16:42.</p><a class="btn secondary small" href="editor.html">Edit site</a></section>
+</div></div></div></main></div><script src="assets/js/app.js?v=20260826-0835"></script></body></html>

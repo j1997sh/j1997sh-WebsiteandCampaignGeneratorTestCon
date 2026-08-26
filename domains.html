@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Domains | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-0835"></head>
+<body class="app-body"><div class="app-shell"><aside class="app-sidebar">
+      <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Client dashboard</small></span></div>
+      <div class="workspace-select">
+        <strong id="sidebarSiteName">Joe Bloggs</strong><small id="sidebarSiteMeta">Bloggs Ward · Councillor Lite</small>
+      </div>
+      <nav class="side-nav"><a class="" href="dashboard.html">Dashboard</a><a class="" href="websites.html">Websites</a><a href="campaigns.html">Campaigns</a><a href="creative.html">Creative</a><a class="" href="people.html">People</a><a class="" href="surveys.html">Surveys</a><a class="active" href="domains.html">Domains</a><a href="integrations.html">Integrations</a><a class="" href="settings.html">Settings</a></nav>
+      <div class="side-bottom">
+        <div class="user-chip"><span class="avatar">JB</span><span><strong>Joe Bloggs</strong><small>Account owner</small></span></div>
+        <a class="side-nav logout-link" style="padding:10px 12px;display:block" href="login.html" id="logoutLink">Log out</a>
+      </div>
+    </aside><main class="app-main"><header class="app-topbar"><h1>Domains</h1>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="global-search-wrap">
+            <input class="global-search-input" id="globalSearchInput" placeholder="Search people or websites">
+            <span class="global-search-kbd">⌘K</span>
+            <div class="search-popover" id="globalSearchPopover"></div>
+          </div>
+          <a class="btn secondary small" href="public-site.html">View public site</a>
+        </div></header><div class="app-content">
+<div class="page-intro"><div><h2>Domains & hosting</h2><p>Your site is hosted by Campaign Platform. Connect a custom domain whenever you are ready.</p></div></div>
+<div class="publish-bar"><div class="publish-state"><span class="state-dot"></span><div><strong>Site is published</strong><div class="publish-meta">Hosted automatically · SSL active</div></div></div><a class="btn secondary small" href="public-site.html">Open live site</a></div>
+<div class="domain-card">
+<div class="domain-status"><div><div class="domain-name">joe-bloggs.campaignplatform.example</div><div class="domain-sub">Platform address · always available</div></div><span class="tag green">Published</span></div>
+<div class="domain-status"><div><div class="domain-name">joebloggs.co.uk</div><div class="domain-sub">Custom domain</div></div><span class="tag amber">DNS setup needed</span></div>
+<h3>Connect your custom domain <span class="help-tip" data-help="domain">?</span></h3><p class="muted">Add these records at your domain provider. The live product would verify them automatically.</p>
+<table class="dns-table"><thead><tr><th>Type</th><th>Name</th><th>Value</th><th>Status</th></tr></thead><tbody><tr><td>CNAME</td><td>www</td><td>sites.campaignplatform.example</td><td><span class="tag amber">Waiting</span></td></tr><tr><td>A</td><td>@</td><td>203.0.113.10</td><td><span class="tag amber">Waiting</span></td></tr></tbody></table>
+<div class="button-row" style="margin-top:16px"><button class="btn small" data-save>Check DNS again</button><button class="btn secondary small">Remove custom domain</button></div>
+</div></div></main></div><script src="assets/js/app.js?v=20260826-0835"></script></body></html>

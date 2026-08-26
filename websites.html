@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Website | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-0835"></head>
+<body class="app-body"><div class="app-shell"><aside class="app-sidebar">
+      <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Client dashboard</small></span></div>
+      <div class="workspace-select">
+        <strong id="sidebarSiteName">Joe Bloggs</strong><small id="sidebarSiteMeta">Bloggs Ward · Councillor Lite</small>
+      </div>
+      <nav class="side-nav"><a class="" href="dashboard.html">Dashboard</a><a class="active" href="websites.html">Websites</a><a href="campaigns.html">Campaigns</a><a href="creative.html">Creative</a><a class="" href="people.html">People</a><a class="" href="surveys.html">Surveys</a><a class="" href="domains.html">Domains</a><a href="integrations.html">Integrations</a><a class="" href="settings.html">Settings</a></nav>
+      <div class="side-bottom">
+        <div class="user-chip"><span class="avatar">JB</span><span><strong>Joe Bloggs</strong><small>Account owner</small></span></div>
+        <a class="side-nav logout-link" style="padding:10px 12px;display:block" href="login.html" id="logoutLink">Log out</a>
+      </div>
+    </aside><main class="app-main"><header class="app-topbar"><h1>Website</h1>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="global-search-wrap">
+            <input class="global-search-input" id="globalSearchInput" placeholder="Search people or websites">
+            <span class="global-search-kbd">⌘K</span>
+            <div class="search-popover" id="globalSearchPopover"></div>
+          </div>
+          <a class="btn small" href="new-site.html">New website</a>
+        </div></header><div class="app-content">
+<div class="site-library-header"><div><h2 style="margin:0;font-size:38px;letter-spacing:-.04em">Your websites</h2><p class="muted">Create and manage multiple campaign websites from one account.</p></div><a class="btn small" href="new-site.html">Create new website</a></div>
+<div class="onboarding-card" id="firstUseOnboarding">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><strong>New website setup</strong><p class="muted" style="margin:4px 0 0">For a new site, complete these four steps and publish.</p></div><span class="status-chip draft">Draft</span></div>
+      <div class="onboarding-steps">
+        <div class="onboarding-step done"><strong>1. Candidate</strong><small>Name, ward and contact details</small></div>
+        <div class="onboarding-step"><strong>2. Hero</strong><small>Headline and campaign image</small></div>
+        <div class="onboarding-step"><strong>3. Priorities</strong><small>Add the issues you are standing on</small></div>
+        <div class="onboarding-step"><strong>4. Publish</strong><small>Preview and make the website live</small></div>
+      </div>
+      <div class="onboarding-progress"><span style="width:25%"></span></div>
+    </div>
+    <div class="site-library-grid" id="siteLibraryGrid" style="margin-top:14px">
+  <section class="site-library-card" data-site-card="joe-bloggs">
+    <div style="display:flex;align-items:center"><span class="status-chip published">Published</span><div class="site-actions-menu"><button class="site-menu-btn" type="button">•••</button><div class="site-actions-pop"><button data-duplicate-site="joe-bloggs">Duplicate</button><button data-archive-site="joe-bloggs">Archive</button></div></div></div>
+    <h3>Joe Bloggs</h3><p>Bloggs Ward · Councillor Lite</p><div class="site-meta">joe-bloggs.campaignplatform.example</div>
+    <div class="button-row"><a class="btn small" href="editor.html?site=joe-bloggs">Edit website</a><a class="btn secondary small" href="public-site.html?site=joe-bloggs">View live</a></div>
+  </section>
+  <section class="site-library-card" data-site-card="sarah-jones">
+    <div style="display:flex;align-items:center"><span class="status-chip draft">Draft</span><div class="site-actions-menu"><button class="site-menu-btn" type="button">•••</button><div class="site-actions-pop"><button data-duplicate-site="sarah-jones">Duplicate</button><button data-archive-site="sarah-jones">Archive</button></div></div></div>
+    <h3>Sarah Jones</h3><p>North Bloggs · Councillor Lite</p><div class="site-meta">Draft · not published</div>
+    <div class="button-row"><a class="btn small" href="editor.html?site=sarah-jones">Continue editing</a><a class="btn secondary small" href="editor.html?site=sarah-jones">Overview</a></div>
+  </section>
+  <section class="site-empty"><h3>Create another website</h3><p class="muted">Use the same account for another ward, candidate or campaign.</p><a class="btn secondary small" href="new-site.html">Create website</a></section>
+</div>
+</div></main></div><script src="assets/js/app.js?v=20260826-0835"></script></body></html>
