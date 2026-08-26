@@ -1226,3 +1226,174 @@ function cpCreativeSnapshot(){
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${cssText}</style>${markup}</div></foreignObject></svg>`;
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
+
+
+/* SURVEY LIBRARY HARD FIX */
+(function hardSurveyLibrary(){
+  const grid=document.getElementById('surveyCardGrid');
+  if(!grid || typeof CP==='undefined') return;
+
+  function escv(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+  function render(){
+    const d=CP.db();
+    const surveys=Object.values(d.surveys||{});
+    const active=d.websites?.[d.activeWebsiteId];
+
+    if(!surveys.length){
+      grid.innerHTML=`<article class="survey-card create-card"><h3>Create your first survey</h3><p>Build a reusable survey for your website or campaign.</p><button class="btn secondary" id="createFirstSurvey" style="margin-top:18px">Create survey</button></article>`;
+      document.getElementById('createFirstSurvey').onclick=createSurvey;
+      return;
+    }
+
+    grid.innerHTML=surveys.map(s=>{
+      const websiteSelected=active?.surveyId===s.id;
+      const campaigns=Object.values(d.campaigns||{}).filter(c=>c.surveyId===s.id);
+      const enabled=(s.questions||[]).filter(q=>q.enabled);
+      return `<article class="survey-card">
+        <div class="survey-card-top">
+          <span class="status-chip ${s.status==='Published'?'published':'draft'}">${escv(s.status||'Draft')}</span>
+          <button class="survey-card-menu" type="button">•••</button>
+        </div>
+        <h3>${escv(s.name)}</h3>
+        <p>${enabled.length} active question${enabled.length===1?'':'s'}</p>
+        <div class="survey-card-preview">
+          ${enabled.slice(0,3).map((q,i)=>`<div class="survey-card-preview-line ${i?'short':''}"></div><div class="survey-card-preview-field"></div>`).join('')}
+        </div>
+        <div class="survey-card-meta">
+          <span>${s.responses||0} responses</span>
+          ${websiteSelected?'<span class="sync-badge">Used on website</span>':''}
+        </div>
+        ${campaigns.length?`<p class="assignment-note">Used by ${campaigns.map(c=>escv(c.name)).join(', ')}</p>`:''}
+        <div class="library-card-actions">
+          <a class="btn small" href="survey-editor.html?id=${encodeURIComponent(s.id)}">Edit survey</a>
+          <button class="btn secondary small" data-use-survey="${escv(s.id)}">${websiteSelected?'Selected':'Use on website'}</button>
+          <button class="btn secondary small" data-duplicate-survey="${escv(s.id)}">Duplicate</button>
+          <button class="btn secondary small" data-delete-survey="${escv(s.id)}">Delete</button>
+        </div>
+      </article>`;
+    }).join('')+`
+      <article class="survey-card create-card">
+        <h3>Create another survey</h3>
+        <p>Use a different survey for a local issue, campaign or audience.</p>
+        <button class="btn secondary" id="createAnotherSurvey" style="margin-top:18px">Create survey</button>
+      </article>`;
+
+    grid.querySelectorAll('[data-use-survey]').forEach(b=>b.onclick=()=>{CP.assignSurvey('website',d.activeWebsiteId,b.dataset.useSurvey);render()});
+    grid.querySelectorAll('[data-duplicate-survey]').forEach(b=>b.onclick=()=>{CP.duplicate('surveys',b.dataset.duplicateSurvey);render()});
+    grid.querySelectorAll('[data-delete-survey]').forEach(b=>b.onclick=()=>{if(confirm('Delete this survey?')){CP.remove('surveys',b.dataset.deleteSurvey);render()}});
+    document.getElementById('createAnotherSurvey').onclick=createSurvey;
+  }
+
+  function createSurvey(){
+    const name=prompt('Survey name','New survey');
+    if(!name)return;
+    const s=CP.createSurvey(name);
+    CP.patch('surveys',s.id,{questions:[
+      {id:CP.uid('q'),type:'single',label:'What matters most to you?',enabled:true,options:['Option 1','Option 2','Option 3']},
+      {id:CP.uid('q'),type:'text',label:'Tell us more',enabled:true,options:[]},
+      {id:CP.uid('q'),type:'yesno',label:'Would you like campaign updates by email?',enabled:true,options:['Yes','No']}
+    ]});
+    location.href='survey-editor.html?id='+encodeURIComponent(s.id);
+  }
+
+  render();
+})();
+
+
+/* CAMPAIGN MICROSITE VISUAL EDITOR */
+(function campaignVisualEditor(){
+  const frame=document.getElementById('campaignFrame');
+  if(!frame || typeof CP==='undefined') return;
+
+  const id=new URLSearchParams(location.search).get('id');
+  let campaign=CP.get('campaigns',id);
+  if(!campaign){location.href='campaigns.html';return}
+
+  const d=()=>CP.db();
+  const workspace=document.getElementById('campaignWorkspace');
+  const drawer=document.getElementById('campaignDrawer');
+  const body=document.getElementById('campaignDrawerBody');
+  const title=document.getElementById('campaignDrawerTitle');
+  const overlay=document.getElementById('campaignOverlay');
+
+  document.getElementById('campaignEditorName').textContent=campaign.name;
+  document.getElementById('campaignEditorStatus').textContent=campaign.status;
+  document.getElementById('campaignEditorStatus').className='status-chip '+(campaign.status==='Published'?'published':'draft');
+
+  function escv(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+  function pageHTML(){
+    const survey=campaign.surveyId?d().surveys[campaign.surveyId]:null;
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+    *{box-sizing:border-box}body{margin:0;font-family:"Proxima Nova","Avenir Next",Arial,sans-serif;color:#08254a}.container{width:min(960px,calc(100% - 40px));margin:auto}
+    .hero{background:#08254a;color:#fff;padding:82px 0}.hero h1{font-size:76px;line-height:.92;letter-spacing:-.04em;margin:0 0 18px}.hero p{font-size:20px;max-width:720px}
+    .image{height:420px;background:#bccbd9 center/cover no-repeat}.points{padding:56px 0;background:#f3f7fb}.point-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.point{background:#fff;border:1px solid #dbe4ee;padding:20px;font-weight:900}
+    .signup{padding:56px 0}.signup-box{border:1px solid #dbe4ee;padding:24px;max-width:680px}.signup-box input,.signup-box select{width:100%;padding:12px;border:1px solid #ccd7e3;margin:5px 0}.btn{border:0;background:#1476d4;color:#fff;padding:14px 18px;font-weight:900}.imprint{background:#061a34;color:#fff;padding:28px 0;font-size:12px}
+    @media(max-width:700px){.hero h1{font-size:52px}.point-grid{grid-template-columns:1fr}}
+    </style></head><body>
+    <section class="hero" data-campaign-section="hero"><div class="container"><h1>${escv(campaign.headline)}</h1><p>${escv(campaign.support||'')}</p></div></section>
+    <section class="image" data-campaign-section="image" style="${campaign.image?`background-image:url('${campaign.image}')`:''}"></section>
+    <section class="points" data-campaign-section="points"><div class="container"><div class="point-grid">${(campaign.points||[]).slice(0,3).map(p=>`<div class="point">${escv(p)}</div>`).join('')}</div></div></section>
+    <section class="signup" data-campaign-section="signup"><div class="container"><div class="signup-box"><h2>${survey?escv(survey.name):'Back this campaign'}</h2><input placeholder="First name"><input placeholder="Last name"><input placeholder="Email"><input placeholder="Postcode">${survey?`<p>${(survey.questions||[]).filter(q=>q.enabled).length} survey questions linked</p>`:''}<button class="btn">Back the campaign</button></div></div></section>
+    <footer class="imprint" data-campaign-section="imprint"><div class="container">Promoted by Joe Bloggs, Bloggs Ward.</div></footer>
+    </body></html>`;
+  }
+
+  function render(){
+    const doc=frame.contentDocument;
+    doc.open();doc.write(pageHTML());doc.close();
+    setTimeout(buildHotspots,60)
+  }
+
+  function buildHotspots(){
+    overlay.innerHTML='';
+    const doc=frame.contentDocument;
+    const labels={hero:'Hero',image:'Image',points:'Three key points',signup:'Signup',imprint:'Imprint'};
+    [...doc.querySelectorAll('[data-campaign-section]')].forEach(node=>{
+      const type=node.dataset.campaignSection,r=node.getBoundingClientRect();
+      const h=document.createElement('div');
+      h.className='edit-hotspot';
+      h.style.left=r.left+'px';h.style.top=r.top+'px';h.style.width=r.width+'px';h.style.height=r.height+'px';
+      h.innerHTML=`<span class="edit-badge">Edit ${labels[type]}</span>`;
+      h.onclick=()=>openDrawer(type);
+      overlay.appendChild(h)
+    });
+    const height=Math.max(doc.body.scrollHeight,doc.documentElement.scrollHeight);
+    frame.style.height=height+'px';overlay.style.height=height+'px'
+  }
+
+  function save(changes){
+    campaign=CP.patch('campaigns',id,changes);
+    document.getElementById('campaignAutosaveText').textContent='Saving…';
+    setTimeout(()=>document.getElementById('campaignAutosaveText').textContent='Saved just now',450);
+    render()
+  }
+
+  function openDrawer(type){
+    workspace.classList.add('drawer-open');
+    title.textContent='Edit '+({hero:'hero',image:'image',points:'three key points',signup:'signup',imprint:'imprint'}[type]);
+    let html='';
+    if(type==='hero') html=`<label class="field"><span>Headline</span><textarea id="cHeadline">${escv(campaign.headline)}</textarea></label><label class="field"><span>Supporting copy</span><textarea id="cSupport">${escv(campaign.support||'')}</textarea></label>`;
+    if(type==='image') html=`<label class="field"><span>Campaign image</span><input id="cImage" type="file" accept="image/*"></label>`;
+    if(type==='points') html=(campaign.points||[]).slice(0,3).map((p,i)=>`<label class="field"><span>Key point ${i+1}</span><textarea class="cPoint" data-i="${i}">${escv(p)}</textarea></label>`).join('');
+    if(type==='signup'){
+      const surveys=Object.values(d().surveys||{});
+      html=`<label class="field"><span>Linked survey</span><select id="cSurvey"><option value="">No survey</option>${surveys.map(s=>`<option value="${s.id}" ${campaign.surveyId===s.id?'selected':''}>${escv(s.name)}</option>`).join('')}</select></label><p class="muted">The signup box can use any survey created in Surveys.</p>`;
+    }
+    if(type==='imprint') html=`<p class="muted">Imprint inherits the campaign account details in this prototype.</p>`;
+    body.innerHTML=html;
+
+    const headline=document.getElementById('cHeadline'); if(headline)headline.oninput=()=>save({headline:headline.value,support:document.getElementById('cSupport').value});
+    const support=document.getElementById('cSupport'); if(support)support.oninput=()=>save({headline:document.getElementById('cHeadline').value,support:support.value});
+    document.querySelectorAll('.cPoint').forEach(el=>el.oninput=()=>{const pts=[...(campaign.points||[])];pts[+el.dataset.i]=el.value;save({points:pts})});
+    const survey=document.getElementById('cSurvey'); if(survey)survey.onchange=()=>save({surveyId:survey.value||null});
+    const image=document.getElementById('cImage'); if(image)image.onchange=()=>{const f=image.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>save({image:r.result});r.readAsDataURL(f)}
+  }
+
+  document.getElementById('campaignDrawerClose').onclick=()=>workspace.classList.remove('drawer-open');
+  document.getElementById('campaignPublishBtn').onclick=()=>{campaign=CP.patch('campaigns',id,{status:'Published'});document.getElementById('campaignEditorStatus').textContent='Published';document.getElementById('campaignEditorStatus').className='status-chip published'};
+  document.getElementById('campaignPreviewBtn').onclick=()=>window.open('campaign-editor.html?id='+encodeURIComponent(id),'_blank');
+
+  render()
+})();

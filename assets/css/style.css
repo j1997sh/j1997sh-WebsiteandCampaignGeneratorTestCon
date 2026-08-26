@@ -665,3 +665,11 @@ table{width:100%;border-collapse:collapse;min-width:850px}th,td{text-align:left;
 .survey-editor-layout{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:18px}
 @media(max-width:980px){.survey-card-grid{grid-template-columns:1fr 1fr}.survey-editor-layout{grid-template-columns:1fr}}
 @media(max-width:650px){.survey-card-grid{grid-template-columns:1fr}}
+
+/* Campaign visual editor */
+.campaign-visual-shell{min-height:calc(100vh - 70px)}
+.campaign-visual-shell .visual-editor-workspace{grid-template-columns:minmax(0,1fr) 0}
+.campaign-visual-shell .visual-editor-workspace.drawer-open{grid-template-columns:minmax(0,1fr) 420px}
+.campaign-visual-shell .drawer{position:relative;display:none;width:auto;height:100%;transform:none}
+.campaign-visual-shell .visual-editor-workspace.drawer-open .drawer{display:block}
+.campaign-site-img{min-height:360px;background:#d8e2eb center/cover no-repeat}
