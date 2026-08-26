@@ -194,18 +194,9 @@
     });
 
     
-  // Stage 3E isolation hardening: local workspace cache must contain only
-  // rows belonging to the currently authenticated local account.
-  if (account && account.id) {
-    ['websites','campaigns','surveys','graphics','people','actions'].forEach(function(key){
-      if (Array.isArray(db[key])) {
-        db[key] = db[key].filter(function(row){
-          return !row || !row.accountId && !row.account_id || row.accountId === account.id || row.account_id === account.id;
-        });
-      }
-    });
-  }
-localStorage.setItem(DB_KEY,JSON.stringify(local));
+  // Supabase RLS already limits these queries to the signed-in local account.
+    // Replace the synchronous UI cache with that authoritative dataset.
+    localStorage.setItem(DB_KEY,JSON.stringify(local));
     if(active){
       localStorage.setItem('cpCurrentSite',active);
       localStorage.setItem('cpCurrentSiteShared',active);
