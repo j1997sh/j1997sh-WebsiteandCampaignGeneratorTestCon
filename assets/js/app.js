@@ -677,7 +677,7 @@ function saveSurveyQuestions(q){localStorage.setItem('cpSurvey:'+cpCurrentSiteId
   const p=cpPeople(),survey=p.filter(x=>x.actions.includes('survey')),vol=p.filter(x=>x.volunteer),backers=p.filter(x=>x.actions.includes('bus_campaign'));
   const vals=[p.length,survey.length,backers.length,vol.length];
   kpis.forEach((k,i)=>{const strong=k.querySelector('strong');if(strong)strong.textContent=vals[i]});
-  const urls=['people.html','people.html?issue=Roads','people.html?issue=Bus%20campaign','people.html?volunteer=Leaflets'];
+  const urls=['people.html','campaigns.html','surveys.html','people.html?volunteer=Leaflets'];
   kpis.forEach((k,i)=>{k.classList.add('drill-link');k.onclick=()=>location.href=urls[i]});
   document.querySelectorAll('.issue-row').forEach(row=>{
     const name=row.querySelector('span')?.textContent.trim();if(!name)return;row.classList.add('drill-link');row.onclick=()=>location.href='people.html?issue='+encodeURIComponent(name==='Services'?'Local services':name)
@@ -1486,3 +1486,161 @@ window.addEventListener('error',e=>{
   const app=document.querySelector('.app-content');if(!app||document.getElementById('runtimeErrorBanner'))return;
   const b=document.createElement('div');b.id='runtimeErrorBanner';b.className='state-banner error';b.textContent='Something on this page did not load correctly. Your saved data has not been removed.';app.prepend(b)
 });
+
+
+/* STAGE 1 HARDENING DATA HELPERS */
+CP.history=function(type,id){
+  const d=CP.db();
+  d.history=d.history||{};
+  const key=type+':'+id;
+  return d.history[key]||[];
+};
+CP.snapshot=function(type,id,label='Published'){
+  const d=CP.db();
+  d.history=d.history||{};
+  const key=type+':'+id;
+  d.history[key]=d.history[key]||[];
+  const item=d[type]?.[id];
+  if(!item)return null;
+  d.history[key].unshift({id:CP.uid('version'),label,time:new Date().toISOString(),data:JSON.parse(JSON.stringify(item))});
+  d.history[key]=d.history[key].slice(0,12);
+  CP.save(d);
+  return d.history[key][0]
+};
+CP.restoreVersion=function(type,id,versionId){
+  const d=CP.db(),key=type+':'+id;
+  const v=(d.history?.[key]||[]).find(x=>x.id===versionId);
+  if(!v||!d[type]?.[id])return null;
+  d[type][id]={...JSON.parse(JSON.stringify(v.data)),id,updatedAt:new Date().toISOString()};
+  CP.save(d);return d[type][id]
+};
+CP.softDelete=function(type,id){
+  const item=CP.get(type,id);if(!item)return null;
+  const backup=JSON.parse(JSON.stringify(item));
+  CP.remove(type,id);
+  return backup
+};
+CP.createWebsite=function(name,area=''){
+  const d=CP.db(),id=CP.uid('site');
+  const item={id,name,area,type:'Councillor Lite',status:'Draft',domain:'',surveyId:null,branding:{primary:'#08254a',secondary:'#1476d4',text:'#ffffff'},updatedAt:new Date().toISOString()};
+  d.websites[id]=item;d.activeWebsiteId=id;CP.save(d);return item
+};
+CP.switchWebsite=function(id){CP.setActiveWebsite(id);localStorage.setItem('cpCurrentSiteShared',id)};
+
+
+/* WEBSITE LIBRARY */
+(function websiteLibraryShared(){
+  const grid=document.getElementById('sharedWebsiteGrid');if(!grid)return;
+  function render(){
+    const d=CP.db(),items=Object.values(d.websites||{});
+    if(!items.length){
+      grid.innerHTML='<div class="empty-state-card library-empty"><h3>No websites yet</h3><p>Create your first campaign website to get started.</p><a class="btn" href="website-create.html">Create website</a></div>';return;
+    }
+    grid.innerHTML=items.map(w=>`<article class="site-card">
+      <div style="display:flex;justify-content:space-between;gap:10px"><span class="status-chip ${w.status==='Published'?'published':w.status==='Archived'?'archived':'draft'}">${w.status}</span><div class="entity-menu-wrap"><button class="entity-menu-btn" data-menu-button="${w.id}">•••</button><div class="entity-menu" data-menu="${w.id}"><button data-duplicate-website="${w.id}">Duplicate</button><button data-archive-website="${w.id}">${w.status==='Archived'?'Restore':'Archive'}</button><button data-delete-website="${w.id}">Delete</button></div></div></div>
+      <h3>${w.name}</h3><p class="muted">${w.area} · ${w.type||'Website'}</p><p class="muted">${w.domain||'No custom domain'}</p>
+      <div class="library-card-actions"><a class="btn small" href="website-overview.html?id=${w.id}">Overview</a><a class="btn secondary small" href="editor.html?site=${encodeURIComponent(w.id)}">Edit</a><button class="btn secondary small" data-switch-website="${w.id}">${d.activeWebsiteId===w.id?'Current':'Switch to'}</button></div>
+    </article>`).join('')+`<article class="site-card create-card"><h3>Create another website</h3><p>Use the same account for another ward, candidate or campaign.</p><a class="btn secondary" href="website-create.html">Create website</a></article>`;
+    bindMenus();
+    grid.querySelectorAll('[data-switch-website]').forEach(b=>b.onclick=()=>{CP.switchWebsite(b.dataset.switchWebsite);render()});
+    grid.querySelectorAll('[data-duplicate-website]').forEach(b=>b.onclick=()=>{CP.duplicate('websites',b.dataset.duplicateWebsite);render()});
+    grid.querySelectorAll('[data-archive-website]').forEach(b=>b.onclick=()=>{const w=CP.get('websites',b.dataset.archiveWebsite);w.status==='Archived'?CP.restore('websites',w.id):CP.archive('websites',w.id);render()});
+    grid.querySelectorAll('[data-delete-website]').forEach(b=>b.onclick=()=>{const id=b.dataset.deleteWebsite,w=CP.get('websites',id);if(!confirm(`Delete ${w.name}?`))return;const backup=CP.softDelete('websites',id);CPUndo('Website deleted',()=>{CP.put('websites',backup);render()});render()})
+  }
+  function bindMenus(){
+    grid.querySelectorAll('[data-menu-button]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();grid.querySelectorAll('.entity-menu').forEach(m=>m.classList.remove('open'));grid.querySelector(`[data-menu="${btn.dataset.menuButton}"]`)?.classList.toggle('open')});
+  }
+  document.addEventListener('click',()=>grid.querySelectorAll('.entity-menu').forEach(m=>m.classList.remove('open')));
+  render()
+})();
+
+/* WEBSITE CREATE */
+(function websiteCreateFlow(){
+  const flow=document.getElementById('websiteCreateFlow');if(!flow)return;
+  const steps=[...flow.querySelectorAll('.create-step')],bars=[...flow.querySelectorAll('.create-progress span')],survey=document.getElementById('wcSurvey');
+  Object.values(CP.db().surveys||{}).forEach(s=>survey.insertAdjacentHTML('beforeend',`<option value="${s.id}">${s.name}</option>`));
+  const show=n=>{steps.forEach((s,i)=>s.classList.toggle('active',i===n-1));bars.forEach((b,i)=>b.classList.toggle('done',i<n))};
+  document.getElementById('wcNext1').onclick=()=>{if(!document.getElementById('wcName').value.trim())return;show(2)};
+  document.getElementById('wcBack2').onclick=()=>show(1);
+  document.getElementById('wcNext2').onclick=()=>{document.getElementById('wcSummary').textContent=`Create ${document.getElementById('wcName').value} for ${document.getElementById('wcArea').value||'this area'}.`;show(3)};
+  document.getElementById('wcBack3').onclick=()=>show(2);
+  document.getElementById('wcCreate').onclick=()=>{const w=CP.createWebsite(document.getElementById('wcName').value.trim(),document.getElementById('wcArea').value.trim());if(survey.value)CP.assignSurvey('website',w.id,survey.value);location.href='website-overview.html?id='+w.id}
+})();
+
+/* WEBSITE OVERVIEW */
+(function websiteOverview(){
+  const root=document.getElementById('websiteOverviewRoot');if(!root)return;
+  const d=CP.db(),id=new URLSearchParams(location.search).get('id')||d.activeWebsiteId,w=d.websites[id];
+  if(!w){root.innerHTML='<div class="empty-state-card"><h3>Website not found</h3></div>';return}
+  const campaigns=Object.values(d.campaigns||{}).filter(c=>c.websiteId===id),graphics=Object.values(d.graphics||{}).filter(g=>g.websiteId===id),survey=w.surveyId?d.surveys[w.surveyId]:null,hist=CP.history('websites',id);
+  root.innerHTML=`<div class="overview-head"><div><span class="status-chip ${w.status==='Published'?'published':w.status==='Archived'?'archived':'draft'}">${w.status}</span><h2 style="margin:9px 0 5px">${w.name}</h2><p class="muted">${w.area} · ${w.domain||'No custom domain'}</p></div><div class="overview-actions"><a class="btn small" href="editor.html?site=${encodeURIComponent(w.id)}">Edit website</a><button class="btn secondary small" id="websitePublish">${w.status==='Published'?'Publish changes':'Publish'}</button></div></div>
+  <div class="overview-stat-grid"><div class="overview-stat"><strong>${campaigns.length}</strong><span>Campaigns</span></div><div class="overview-stat"><strong>${survey?.responses||0}</strong><span>Survey responses</span></div><div class="overview-stat"><strong>${graphics.length}</strong><span>Graphics</span></div><div class="overview-stat"><strong>${d.integrations?.nationbuilder?.connected?'✓':'—'}</strong><span>CRM sync</span></div></div>
+  <div class="overview-grid"><section class="panel"><h3>Linked content</h3><div class="overview-list"><div class="overview-item"><div><strong>Survey</strong><small>${survey?.name||'No survey assigned'}</small></div>${survey?`<a class="btn secondary small" href="survey-overview.html?id=${survey.id}">Open</a>`:''}</div>${campaigns.map(c=>`<div class="overview-item"><div><strong>${c.name}</strong><small>Campaign · ${c.status}</small></div><a class="btn secondary small" href="campaign-overview.html?id=${c.id}">Open</a></div>`).join('')||'<div class="empty-state-card compact"><p>No campaigns linked yet.</p></div>'}</div></section><section class="panel"><h3>Publish history</h3><div class="publish-history" id="websitePublishHistory">${hist.length?hist.map(v=>`<div class="publish-version"><div><strong>${v.label}</strong><small>${new Date(v.time).toLocaleString()}</small></div><button class="btn secondary small" data-restore-web="${v.id}">Restore</button></div>`).join(''):'<div class="empty-state-card compact"><p>No previous published versions yet.</p></div>'}</div></section></div>`;
+  document.getElementById('websitePublish').onclick=()=>{CP.snapshot('websites',id,'Published version');CP.patch('websites',id,{status:'Published'});location.reload()};
+  root.querySelectorAll('[data-restore-web]').forEach(b=>b.onclick=()=>{CP.restoreVersion('websites',id,b.dataset.restoreWeb);location.reload()})
+})();
+
+/* SURVEY OVERVIEW */
+(function surveyOverview(){
+  const root=document.getElementById('surveyOverviewRoot');if(!root)return;
+  const id=new URLSearchParams(location.search).get('id'),s=CP.get('surveys',id);if(!s){root.innerHTML='<div class="empty-state-card"><h3>Survey not found</h3></div>';return}
+  const d=CP.db(),rel=CP.relationships('survey',id),actions=(d.actions||[]).filter(a=>a.surveyId===id),hist=CP.history('surveys',id);
+  root.innerHTML=`<div class="overview-head"><div><span class="status-chip ${s.status==='Published'?'published':'draft'}">${s.status}</span><h2 style="margin:9px 0 5px">${s.name}</h2><p class="muted">${(s.questions||[]).filter(q=>q.enabled).length} active questions</p></div><div class="overview-actions"><a class="btn small" href="survey-editor.html?id=${s.id}">Edit survey</a><button class="btn secondary small" id="surveyPublish">Publish</button></div></div>
+  <div class="overview-stat-grid"><div class="overview-stat"><strong>${s.responses||0}</strong><span>Responses</span></div><div class="overview-stat"><strong>${rel.website?1:0}</strong><span>Website using it</span></div><div class="overview-stat"><strong>${rel.campaigns?.length||0}</strong><span>Campaigns using it</span></div><div class="overview-stat"><strong>${(s.questions||[]).filter(q=>q.enabled).length}</strong><span>Questions</span></div></div>
+  <div class="overview-grid"><section class="panel"><h3>Used by</h3><div class="overview-list">${rel.website?`<div class="overview-item"><div><strong>${rel.website.name}</strong><small>Main website</small></div><a class="btn secondary small" href="website-overview.html?id=${rel.website.id}">Open</a></div>`:''}${(rel.campaigns||[]).map(c=>`<div class="overview-item"><div><strong>${c.name}</strong><small>Campaign</small></div><a class="btn secondary small" href="campaign-overview.html?id=${c.id}">Open</a></div>`).join('')||(!rel.website?'<div class="empty-state-card compact"><p>This survey is not assigned anywhere yet.</p></div>':'')}</div></section><section class="panel"><h3>Latest responses</h3>${actions.length?actions.slice(0,5).map(a=>`<div class="compact-activity"><strong>${a.text}</strong><small>${new Date(a.time).toLocaleString()}</small></div>`).join(''):'<div class="empty-state-card compact"><p>No responses yet.</p></div>'}</section></div>`;
+  document.getElementById('surveyPublish').onclick=()=>{CP.snapshot('surveys',id,'Published version');CP.patch('surveys',id,{status:'Published'});location.reload()}
+})();
+
+/* CREATIVE OVERVIEW */
+(function creativeOverview(){
+  const root=document.getElementById('creativeOverviewRoot');if(!root)return;
+  const id=new URLSearchParams(location.search).get('id'),g=CP.get('graphics',id);if(!g){root.innerHTML='<div class="empty-state-card"><h3>Graphic not found</h3></div>';return}
+  const rel=CP.relationships('graphic',id);
+  root.innerHTML=`<div class="overview-head"><div><span class="status-chip draft">Saved</span><h2 style="margin:9px 0 5px" id="graphicName">${g.title||'Campaign graphic'}</h2><p class="muted">${g.format||'square'} · ${g.type||'graphic'}</p></div><div class="overview-actions"><a class="btn small" href="creative-editor.html?template=${g.type||'announcement'}&saved=${g.id}">Edit graphic</a><button class="btn secondary small" id="renameGraphic">Rename</button><button class="btn secondary small" id="duplicateGraphic">Duplicate</button><button class="btn secondary small" id="deleteGraphic">Delete</button></div></div>
+  <div class="overview-grid"><section class="panel"><h3>Preview</h3>${g.preview?`<img src="${g.preview}" style="display:block;max-width:420px;width:100%">`:'<div class="empty-state-card compact"><p>Preview unavailable for this older graphic.</p></div>'}</section><section class="panel"><h3>Linked to</h3><div class="overview-list"><div class="overview-item"><div><strong>Website</strong><small>${rel.website?.name||'Not linked'}</small></div>${rel.website?`<a class="btn secondary small" href="website-overview.html?id=${rel.website.id}">Open</a>`:''}</div><div class="overview-item"><div><strong>Campaign</strong><small>${rel.campaign?.name||'Not linked'}</small></div>${rel.campaign?`<a class="btn secondary small" href="campaign-overview.html?id=${rel.campaign.id}">Open</a>`:''}</div></div></section></div>`;
+  document.getElementById('renameGraphic').onclick=()=>{const n=prompt('Graphic name',g.title||'Campaign graphic');if(n){CP.patch('graphics',id,{title:n});location.reload()}};
+  document.getElementById('duplicateGraphic').onclick=()=>{const c=CP.duplicate('graphics',id);if(c)location.href='creative-overview.html?id='+c.id};
+  document.getElementById('deleteGraphic').onclick=()=>{if(!confirm('Delete this graphic?'))return;const backup=CP.softDelete('graphics',id);CPUndo('Graphic deleted',()=>CP.put('graphics',backup));location.href='creative.html'}
+})();
+
+/* STANDARD LIBRARY ACTION MENUS FOR CAMPAIGNS/SURVEYS/CREATIVE */
+(function libraryActionUpgrade(){
+  // Campaigns
+  const cg=document.getElementById('campaignLibraryGrid');
+  if(cg){
+    setTimeout(()=>{
+      cg.querySelectorAll('.campaign-card').forEach(card=>{
+        const edit=card.querySelector('a[href*="campaign-overview"]');if(!edit)return;
+        const id=new URL(edit.href,location.href).searchParams.get('id');
+        const wrap=document.createElement('div');wrap.className='entity-menu-wrap';wrap.innerHTML=`<button class="entity-menu-btn">•••</button><div class="entity-menu"><button data-a="dup">Duplicate</button><button data-a="archive">Archive</button><button data-a="delete">Delete</button></div>`;
+        card.prepend(wrap);const menu=wrap.querySelector('.entity-menu');wrap.querySelector('button').onclick=e=>{e.stopPropagation();menu.classList.toggle('open')};
+        menu.querySelector('[data-a="dup"]').onclick=()=>{CP.duplicate('campaigns',id);location.reload()};
+        menu.querySelector('[data-a="archive"]').onclick=()=>{CP.archive('campaigns',id);location.reload()};
+        menu.querySelector('[data-a="delete"]').onclick=()=>{if(confirm('Delete campaign?')){const backup=CP.softDelete('campaigns',id);CPUndo('Campaign deleted',()=>CP.put('campaigns',backup));location.reload()}};
+      })
+    },80)
+  }
+  // Survey cards -> overview primary
+  const sg=document.getElementById('surveyCardGrid');
+  if(sg)setTimeout(()=>sg.querySelectorAll('a[href*="survey-editor"]').forEach(a=>{const id=new URL(a.href,location.href).searchParams.get('id');a.href='survey-overview.html?id='+id;a.textContent='Overview'}),80);
+  // Creative cards -> details primary
+  const gg=document.getElementById('sharedGraphicLibrary');
+  if(gg)setTimeout(()=>gg.querySelectorAll('a[href*="creative-editor"]').forEach(a=>{const saved=new URL(a.href,location.href).searchParams.get('saved');if(saved){a.href='creative-overview.html?id='+saved;a.textContent='Details'}}),80);
+})();
+
+/* STANDARD AUTOSAVE BINDING */
+window.CPAutosave={
+  saving(el){if(!el)return;el.classList.add('saving');const span=el.querySelector('span:last-child');if(span)span.textContent='Saving…'},
+  saved(el){if(!el)return;el.classList.remove('saving');const span=el.querySelector('span:last-child');if(span)span.textContent='Saved just now'},
+  pulse(el){this.saving(el);setTimeout(()=>this.saved(el),650)}
+};
+
+/* BROKEN IMAGE STATE */
+document.addEventListener('error',e=>{
+  if(e.target?.tagName==='IMG'){e.target.style.display='none';const p=document.createElement('div');p.className='state-banner warn';p.textContent='Image preview could not be loaded.';e.target.after(p)}
+},true);
+
+(function sharedPeopleEmpty(){
+  const root=document.getElementById('peopleSharedEmpty');if(!root)return;
+  if(!Object.keys(CP.db().people||{}).length)root.innerHTML='<div class="empty-state-card"><h3>No supporters yet</h3><p>Publish a website, campaign or survey and new supporter activity will appear here.</p><a class="btn" href="websites.html">Open websites</a></div>'
+})();

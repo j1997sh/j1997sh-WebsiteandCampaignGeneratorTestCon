@@ -1,0 +1,17 @@
+{
+  "base": "/mnt/data/campaign-platform-surveys-creative-history-integrations-full-pass",
+  "html_pages": 23,
+  "js_valid": true,
+  "js_error": "",
+  "missing_internal_links": [],
+  "shared_store": true,
+  "website_survey_relationship": true,
+  "campaign_survey_relationship": true,
+  "shared_graphics": true,
+  "dashboard_campaign_focused": true,
+  "multiple_surveys": true,
+  "survey_assignment": true,
+  "campaign_crud": true,
+  "survey_crud": true,
+  "creative_shared_save": true
+}
