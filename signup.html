@@ -4,37 +4,55 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Create account | Campaign Platform</title>
-<link rel="stylesheet" href="assets/css/style.css?v=20260826-identity-signup-calm-ui">
+<link rel="stylesheet" href="assets/css/style.css?v=20260826-centered-auth">
 </head>
-<body>
-<div class="login-shell">
-  <section class="login-brand">
-    <div class="login-brand-inner">
-      <div class="brand brand-large"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong></span></div>
-      <h1>Build the campaign.<br>Keep everything connected.</h1>
-      <p>Websites, campaign microsites, surveys, creative and supporter data in one place.</p>
+<body class="auth-page">
+<main class="auth-shell">
+  <section class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark">CP</span>
+      <div>
+        <strong>Campaign Platform</strong>
+      </div>
+    </div>
+
+    <div class="auth-heading">
+      <h1>Create account</h1>
+      <p>Set up your campaign workspace.</p>
+    </div>
+
+    <form id="stage2SignupForm" class="auth-form">
+      <div class="signup-name-grid">
+        <label class="field">
+          <span>First name</span>
+          <input id="signupFirstName" name="first_name" autocomplete="given-name" required>
+        </label>
+        <label class="field">
+          <span>Last name</span>
+          <input id="signupLastName" name="last_name" autocomplete="family-name" required>
+        </label>
+      </div>
+      <label class="field">
+        <span>Email address</span>
+        <input id="signupEmail" name="email" type="email" autocomplete="email" required>
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input id="signupPassword" name="password" type="password" autocomplete="new-password" minlength="8" required>
+      </label>
+      <button class="btn auth-submit" type="submit" id="signupSubmit">Create account</button>
+    </form>
+
+    <div id="signupMessage"></div>
+
+    <div class="auth-links">
+      <span>Already have an account? <a href="login.html">Log in</a></span>
     </div>
   </section>
-  <section class="login-panel">
-    <div class="login-card">
-      <h2>Create your account</h2>
-      <p class="muted">Set up your campaign workspace.</p>
-      <form id="stage2SignupForm">
-        <div class="signup-name-grid">
-          <label class="field"><span>First name</span><input id="signupFirstName" name="first_name" autocomplete="given-name" required></label>
-          <label class="field"><span>Last name</span><input id="signupLastName" name="last_name" autocomplete="family-name" required></label>
-        </div>
-        <label class="field"><span>Email address</span><input id="signupEmail" name="email" type="email" autocomplete="email" required></label>
-        <label class="field"><span>Password</span><input id="signupPassword" name="password" type="password" autocomplete="new-password" minlength="8" required></label>
-        <button class="btn" type="submit" id="signupSubmit">Create account</button>
-      </form>
-      <div id="signupMessage"></div>
-      <p class="login-note">Already have an account? <a href="login.html">Log in</a></p>
-    </div>
-  </section>
-</div>
+</main>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase-config.js?v=20260826-identity-signup-calm-ui"></script>
-<script src="assets/js/signup-stage2.js?v=20260826-identity-signup"></script>
+<script src="assets/js/supabase-config.js?v=20260826-centered-auth"></script>
+<script src="assets/js/signup-stage2.js?v=20260826-centered-auth"></script>
 </body>
 </html>

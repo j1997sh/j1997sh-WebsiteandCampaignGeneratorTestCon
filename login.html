@@ -1,3 +1,48 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Log in | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-identity-signup-calm-ui"></head><body>
-<div class="login-page"><section class="login-art"><div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small style="color:#b9cadc">Websites + campaign data</small></span></div><div><h1>Your campaign, in one place.</h1><p>Edit the website, understand supporters and keep the team moving without needing a developer or a giant CRM.</p></div><small style="color:#9fb5cb">Secure campaign workspace</small></section>
-<section class="login-panel"><div class="login-card"><h2>Log in to your campaign</h2><p class="muted">Sign in with your Campaign Platform account.</p><form data-demo-login><label class="field"><span>Email address</span><input type="email" placeholder="Email address"></label><label class="field"><span>Password</span><input type="password" placeholder="Password"></label><button class="btn" type="submit">Log in</button></form><p class="login-note"><a href="forgot-password.html">Forgotten password?</a><br><a href="signup.html">Create an account</a><br><a href="index.html">Back to Campaign Platform</a></p></div></section></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=20260826-identity-signup-calm-ui"></script><script src="assets/js/app.js?v=20260826-identity-signup-calm-ui"></script><script src="assets/js/supabase-backend.js?v=20260826-identity-signup-calm-ui"></script></body></html>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Log in | Campaign Platform</title>
+<link rel="stylesheet" href="assets/css/style.css?v=20260826-centered-auth">
+</head>
+<body class="auth-page">
+<main class="auth-shell">
+  <section class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark">CP</span>
+      <div>
+        <strong>Campaign Platform</strong>
+      </div>
+    </div>
+
+    <div class="auth-heading">
+      <h1>Log in</h1>
+      <p>Welcome back to your campaign workspace.</p>
+    </div>
+
+    <form data-demo-login class="auth-form">
+      <label class="field">
+        <span>Email address</span>
+        <input type="email" placeholder="Email address" autocomplete="email" required>
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input type="password" placeholder="Password" autocomplete="current-password" required>
+      </label>
+      <button class="btn auth-submit" type="submit">Log in</button>
+    </form>
+
+    <div class="auth-links">
+      <a href="forgot-password.html">Forgotten password?</a>
+      <span>New here? <a href="signup.html">Create an account</a></span>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-config.js?v=20260826-centered-auth"></script>
+<script src="assets/js/app.js?v=20260826-centered-auth"></script>
+<script src="assets/js/supabase-backend.js?v=20260826-centered-auth"></script>
+</body>
+</html>
