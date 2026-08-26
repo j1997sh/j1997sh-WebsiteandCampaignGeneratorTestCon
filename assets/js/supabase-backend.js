@@ -99,7 +99,7 @@
 
     const [
       websitesR,surveysR,questionsR,campaignsR,graphicsR,peopleR,actionsR,
-      integrationsR,versionsR,tagsR,personTagsR
+      integrationsR,versionsR,tagsR,personTagsR,surveyResponsesR
     ]=await Promise.all([
       sb.from('websites').select('*').order('created_at'),
       sb.from('surveys').select('*').order('created_at'),
@@ -111,9 +111,10 @@
       sb.from('integrations').select('*').order('created_at'),
       sb.from('publish_versions').select('*').order('created_at',{ascending:false}),
       sb.from('tags').select('*').order('name'),
-      sb.from('person_tags').select('*')
+      sb.from('person_tags').select('*'),
+      sb.from('survey_responses').select('*').order('created_at',{ascending:false})
     ]);
-    const responses=[websitesR,surveysR,questionsR,campaignsR,graphicsR,peopleR,actionsR,integrationsR,versionsR,tagsR,personTagsR];
+    const responses=[websitesR,surveysR,questionsR,campaignsR,graphicsR,peopleR,actionsR,integrationsR,versionsR,tagsR,personTagsR,surveyResponsesR];
     const err=responses.find(r=>r.error)?.error;
     if(err) throw err;
 
@@ -132,7 +133,7 @@
       account:{id:account.id,name:account.name,ownerUserId:account.owner_user_id},
       activeWebsiteId:active,
       websites:{},campaigns:{},surveys:{},graphics:{},people:{},
-      actions:[],integrations:{},history:{}
+      actions:[],surveyResponses:[],integrations:{},history:{}
     };
 
     (websitesR.data||[]).forEach(w=>local.websites[w.id]={
@@ -176,6 +177,11 @@
       id:a.id,type:a.action_type,personId:a.person_id,websiteId:a.website_id,
       campaignId:a.campaign_id,surveyId:a.survey_id,
       text:a.payload?.text||a.action_type,time:a.created_at,payload:a.payload||{}
+    }));
+
+    local.surveyResponses=(surveyResponsesR.data||[]).map(r=>({
+      id:r.id,surveyId:r.survey_id,personId:r.person_id,answers:r.answers||{},
+      source:r.source||'',createdAt:r.created_at
     }));
 
     (integrationsR.data||[]).forEach(i=>local.integrations[i.provider]={
@@ -547,6 +553,131 @@
   });
 
 
+
+  function renderStage2Person(){
+    if(pathname!=='person.html')return;
+    const root=document.querySelector('.app-content');if(!root)return;
+    const id=new URLSearchParams(location.search).get('id');
+    const d=CP.db(),p=d.people?.[id];
+    if(!p){
+      root.innerHTML=`<a class="text-button" href="people.html">← Back to people</a><div class="empty-state-card" style="margin-top:18px"><h3>Supporter not found</h3><p>This supporter may have been removed, or this is an old prototype link.</p><a class="btn secondary" href="people.html">Open People</a></div>`;
+      return;
+    }
+    const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const acts=(d.actions||[]).filter(a=>a.personId===id).sort((a,b)=>new Date(b.time)-new Date(a.time));
+    const responses=(d.surveyResponses||[]).filter(r=>r.personId===id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    const surveys=d.surveys||{},campaigns=d.campaigns||{};
+    const initials=(p.name||'S').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
+
+    function answerLabel(survey,qid){
+      const s=surveys[survey];const q=(s?.questions||[]).find(x=>x.id===qid);
+      return q?.label||'Question';
+    }
+    function answerValue(v){
+      if(Array.isArray(v))return v.join(', ');
+      if(v===true)return 'Yes';if(v===false)return 'No';
+      return String(v??'');
+    }
+
+    root.innerHTML=`<a class="text-button" href="people.html">← Back to people</a>
+      <div class="page-intro" style="margin-top:10px"><div><h2>Supporter profile</h2><p>Real supporter data from Supabase.</p></div><button class="btn secondary small" id="stage2EditPerson">Edit details</button></div>
+      <div class="person-profile-grid">
+        <aside class="panel person-profile-card">
+          <div class="person-avatar">${esc(initials)}</div>
+          <h2>${esc(p.name)}</h2>
+          <div class="person-tag-stack" id="profileTags">${(p.tags||[]).map(t=>`<span class="person-tag">${esc(t.name)} <button data-remove-profile-tag="${t.id}">×</button></span>`).join('')||'<span class="muted">No tags</span>'}</div>
+          <button class="text-button" id="profileAddTag" style="margin:8px 0 16px">+ Add tag</button>
+          <dl class="profile-data">
+            <dt>Email</dt><dd>${esc(p.email||'—')}</dd>
+            <dt>Postcode</dt><dd>${esc(p.postcode||'—')}</dd>
+            <dt>Phone</dt><dd>${esc(p.phone||'—')}</dd>
+            <dt>Email consent</dt><dd>${p.consentEmail===true?'<span class="success-text">Opted in</span>':'No / unknown'}</dd>
+            <dt>Acquisition source</dt><dd>${esc(p.source||'—')}</dd>
+            <dt>Voting intention</dt><dd>${esc(p.votingIntention||'Not asked')}</dd>
+          </dl>
+          <label class="field"><span>Notes</span><textarea id="profileNotes" placeholder="Add a campaign note">${esc(p.notes||'')}</textarea></label>
+          <button class="btn secondary small" id="saveProfileNotes">Save notes</button>
+        </aside>
+        <div class="person-profile-main">
+          <section class="panel">
+            <div class="panel-head"><div><h3>Activity timeline</h3><p class="muted">${acts.length} recorded action${acts.length===1?'':'s'}</p></div></div>
+            <div class="activity-timeline">${acts.length?acts.map(a=>`<div class="timeline-item"><span class="timeline-dot"></span><div><strong>${esc(a.text||a.type)}</strong><small>${new Date(a.time).toLocaleString()}${a.source?' · '+esc(a.source):''}</small>${a.campaignId&&campaigns[a.campaignId]?`<a href="campaign-overview.html?id=${a.campaignId}">${esc(campaigns[a.campaignId].name)}</a>`:''}</div></div>`).join(''):'<div class="empty-state-card compact"><p>No recorded actions yet.</p></div>'}</div>
+          </section>
+          <section class="panel" style="margin-top:16px">
+            <div class="panel-head"><div><h3>Survey responses</h3><p class="muted">${responses.length} response${responses.length===1?'':'s'}</p></div></div>
+            <div class="response-list">${responses.length?responses.map(r=>{
+              const s=surveys[r.surveyId];
+              return `<article class="response-card"><div class="response-card-head"><div><strong>${esc(s?.name||'Survey')}</strong><small>${new Date(r.createdAt).toLocaleString()} · ${esc(r.source||'website')}</small></div>${s?`<a class="btn secondary small" href="survey-overview.html?id=${s.id}">Open survey</a>`:''}</div><dl class="response-answers">${Object.entries(r.answers||{}).map(([qid,v])=>`<div><dt>${esc(answerLabel(r.surveyId,qid))}</dt><dd>${esc(answerValue(v)||'—')}</dd></div>`).join('')||'<p class="muted">No answers stored.</p>'}</dl></article>`
+            }).join(''):'<div class="empty-state-card compact"><p>No survey responses for this supporter yet.</p></div>'}</div>
+          </section>
+        </div>
+      </div>`;
+
+    document.getElementById('profileAddTag').onclick=async()=>{
+      const tag=prompt('Add tag');if(!tag)return;
+      try{await window.CPStage2.addPersonTag(id,tag);sessionStorage.clear();location.reload()}catch(e){showBackendError('Could not add tag: '+e.message)}
+    };
+    root.querySelectorAll('[data-remove-profile-tag]').forEach(b=>b.onclick=async()=>{
+      try{await window.CPStage2.removePersonTag(id,b.dataset.removeProfileTag);sessionStorage.clear();location.reload()}catch(e){showBackendError('Could not remove tag: '+e.message)}
+    });
+    document.getElementById('saveProfileNotes').onclick=async()=>{
+      const notes=document.getElementById('profileNotes').value;
+      const {error}=await sb.from('people').update({notes}).eq('id',id);
+      if(error){showBackendError('Could not save notes: '+error.message);return}
+      const btn=document.getElementById('saveProfileNotes');btn.textContent='Saved';setTimeout(()=>btn.textContent='Save notes',800)
+    };
+    document.getElementById('stage2EditPerson').onclick=()=>{
+      document.getElementById('profileNotes').focus()
+    };
+  }
+
+
+  function enhanceStage2SurveyOverview(){
+    if(pathname!=='survey-overview.html')return;
+    const root=document.getElementById('surveyOverviewRoot');if(!root)return;
+    const id=new URLSearchParams(location.search).get('id'),d=CP.db(),s=d.surveys?.[id];
+    if(!s)return;
+    const responses=(d.surveyResponses||[]).filter(r=>r.surveyId===id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    const people=d.people||{};
+    const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const answerValue=v=>Array.isArray(v)?v.join(', '):String(v??'');
+    const qById=Object.fromEntries((s.questions||[]).map(q=>[q.id,q]));
+
+    let section=document.getElementById('stage2SurveyResponses');
+    if(!section){
+      section=document.createElement('section');section.className='panel';section.id='stage2SurveyResponses';section.style.marginTop='16px';root.appendChild(section)
+    }
+    section.innerHTML=`<div class="panel-head"><div><h3>Responses</h3><p class="muted">${responses.length} stored response${responses.length===1?'':'s'}</p></div><button class="btn secondary small" id="exportSurveyResponses">Export CSV</button></div>
+      <div class="response-list">${responses.length?responses.map(r=>{
+        const person=people[r.personId];
+        return `<article class="response-card"><div class="response-card-head"><div><strong>${esc(person?.name||'Anonymous supporter')}</strong><small>${new Date(r.createdAt).toLocaleString()} · ${esc(r.source||'website')}</small></div>${person?`<a class="btn secondary small" href="person.html?id=${person.id}">View person</a>`:''}</div><dl class="response-answers">${Object.entries(r.answers||{}).map(([qid,v])=>`<div><dt>${esc(qById[qid]?.label||'Question')}</dt><dd>${esc(answerValue(v)||'—')}</dd></div>`).join('')}</dl></article>`
+      }).join(''):'<div class="empty-state-card compact"><p>No responses yet.</p></div>'}</div>`;
+
+    document.getElementById('exportSurveyResponses').onclick=()=>{
+      const headers=['Submitted','Person','Email','Postcode',...(s.questions||[]).map(q=>q.label)];
+      const rows=[headers,...responses.map(r=>{
+        const p=people[r.personId]||{};
+        return [new Date(r.createdAt).toISOString(),p.name||'',p.email||'',p.postcode||'',...(s.questions||[]).map(q=>answerValue(r.answers?.[q.id]))]
+      })];
+      const csv=rows.map(row=>row.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+      const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=(s.name||'survey').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-responses.csv';a.click()
+    };
+  }
+
+
+  function enhanceStage2SurveyEditorResults(){
+    if(pathname!=='survey-editor.html')return;
+    const id=new URLSearchParams(location.search).get('id'),d=CP.db(),s=d.surveys?.[id];
+    if(!s)return;
+    const responses=(d.surveyResponses||[]).filter(r=>r.surveyId===id);
+    document.querySelectorAll('[data-editor-tab="results"]').forEach(btn=>btn.addEventListener('click',()=>{
+      setTimeout(()=>{
+        const host=document.getElementById('sharedSurveyResults');if(!host)return;
+        host.innerHTML=`<div class="overview-stat-grid"><div class="overview-stat"><strong>${responses.length}</strong><span>Responses</span></div><div class="overview-stat"><strong>${(s.questions||[]).filter(q=>q.enabled).length}</strong><span>Active questions</span></div></div><p><a class="btn secondary small" href="survey-overview.html?id=${id}">View all responses</a></p>`
+      },20)
+    },true))
+  }
+
   function renderStage2People(){
     if(pathname!=='people.html')return;
     const table=document.querySelector('.table-card table'),filterHost=document.getElementById('stage2PeopleFilters');
@@ -627,6 +758,9 @@
       installCPBridge();
       bindTransactionalCreates();
       renderStage2People();
+      renderStage2Person();
+      enhanceStage2SurveyOverview();
+      enhanceStage2SurveyEditorResults();
       if(!sessionStorage.getItem(bootKey)){
         sessionStorage.setItem(bootKey,'1');
         location.reload(); return;

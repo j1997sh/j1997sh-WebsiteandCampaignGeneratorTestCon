@@ -427,6 +427,7 @@ header{min-height:82px;background:#fff;border-bottom:1px solid var(--line);posit
 })();
 
 (function globalSearch(){
+  if(window.CP_STAGE2)return;
   const input=document.getElementById('globalSearchInput'),pop=document.getElementById('globalSearchPopover');
   if(!input||!pop)return;
   const people=[
