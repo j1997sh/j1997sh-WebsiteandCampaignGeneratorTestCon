@@ -169,18 +169,22 @@
       firstName:p.first_name||'',lastName:p.last_name||'',email:p.email||'',postcode:p.postcode||'',
       phone:p.phone||'',source:p.source||'',votingIntention:p.voting_intention||'',
       notes:p.notes||'',external:p.external_ids||{},consentEmail:p.consent_email,
+      firstTouch:p.first_touch_attribution||{},lastTouch:p.last_touch_attribution||{},
+      firstTouchAt:p.first_touch_at||null,lastTouchAt:p.last_touch_at||null,
+      firstSessionId:p.first_session_id||null,lastSessionId:p.last_session_id||null,
       tags:tagsByPerson[p.id]||[]
     });
 
     local.actions=(actionsR.data||[]).map(a=>({
       id:a.id,type:a.action_type,personId:a.person_id,websiteId:a.website_id,
       campaignId:a.campaign_id,surveyId:a.survey_id,
-      text:a.payload?.text||a.action_type,time:a.created_at,payload:a.payload||{}
+      text:a.payload?.text||a.action_type,time:a.created_at,payload:a.payload||{},
+      sessionId:a.session_id||null,attribution:a.attribution||{}
     }));
 
     local.surveyResponses=(surveyResponsesR.data||[]).map(r=>({
       id:r.id,surveyId:r.survey_id,personId:r.person_id,answers:r.answers||{},
-      source:r.source||'',createdAt:r.created_at
+      source:r.source||'',createdAt:r.created_at,sessionId:r.session_id||null,attribution:r.attribution||{}
     }));
 
     (integrationsR.data||[]).forEach(i=>local.integrations[i.provider]={
@@ -601,7 +605,16 @@
           <button class="btn secondary small" id="saveProfileNotes">Save notes</button>
         </aside>
         <div class="person-profile-main">
-          <section class="panel">
+          <section class="panel person-attribution-panel">
+            <div class="panel-head"><div><h3>Attribution</h3><p class="muted">How this supporter first found the campaign and what converted them most recently.</p></div></div>
+            <div class="person-attribution-grid">
+              <div><span>First touch</span><strong>${esc(p.firstTouch?.utm_source||p.firstTouch?.source||'Direct / unknown')}</strong><small>${[p.firstTouch?.utm_medium,p.firstTouch?.utm_campaign].filter(Boolean).map(esc).join(' · ')||'No UTM detail'}</small></div>
+              <div><span>Last touch</span><strong>${esc(p.lastTouch?.utm_source||p.lastTouch?.source||'Direct / unknown')}</strong><small>${[p.lastTouch?.utm_medium,p.lastTouch?.utm_campaign].filter(Boolean).map(esc).join(' · ')||'No UTM detail'}</small></div>
+              <div><span>Landing page</span><strong>${esc(p.firstTouch?.landing_path||'—')}</strong><small>${p.firstTouchAt?new Date(p.firstTouchAt).toLocaleString():'First visit time not recorded'}</small></div>
+              <div><span>Latest conversion</span><strong>${esc((acts[0]?.attribution?.utm_campaign)||acts[0]?.type||'—')}</strong><small>${acts[0]?.time?new Date(acts[0].time).toLocaleString():'No conversion recorded'}</small></div>
+            </div>
+          </section>
+          <section class="panel" style="margin-top:16px">
             <div class="panel-head"><div><h3>Activity timeline</h3><p class="muted">${acts.length} recorded action${acts.length===1?'':'s'}</p></div></div>
             <div class="activity-timeline">${acts.length?acts.map(a=>`<div class="timeline-item"><span class="timeline-dot"></span><div><strong>${esc(a.text||a.type)}</strong><small>${new Date(a.time).toLocaleString()}${a.source?' · '+esc(a.source):''}</small>${a.campaignId&&campaigns[a.campaignId]?`<a href="campaign-overview.html?id=${a.campaignId}">${esc(campaigns[a.campaignId].name)}</a>`:''}</div></div>`).join(''):'<div class="empty-state-card compact"><p>No recorded actions yet.</p></div>'}</div>
           </section>
