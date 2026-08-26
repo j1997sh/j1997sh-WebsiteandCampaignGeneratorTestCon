@@ -1,26 +1,38 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Edit campaign | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-stage2-person-responses"></head><body class="app-body"><div class="app-shell"><aside class="app-sidebar"><div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Client dashboard</small></span></div><div class="workspace-select"><strong>Joe Bloggs</strong><small>Bloggs Ward · Councillor Lite</small></div><nav class="side-nav"><a href="dashboard.html">Dashboard</a><a href="websites.html">Websites</a><a class="active" href="campaigns.html">Campaigns</a><a href="creative.html">Creative</a><a href="people.html">People</a><a href="surveys.html">Surveys</a><a href="domains.html">Domains</a><a href="integrations.html">Integrations</a><a href="settings.html">Settings</a></nav><div class="side-bottom"><div class="user-chip"><span class="avatar">JB</span><span><strong>Joe Bloggs</strong><small>Account owner</small></span></div><a class="side-nav logout-link" style="padding:10px 12px;display:block" href="login.html">Log out</a></div></aside><main class="app-main"><header class="app-topbar"><h1>Campaign</h1><div><a class="btn secondary small" href="campaigns.html">All campaigns</a></div></header><div class="app-content"><div class="editor-scope-note"><strong>Campaign microsite editor</strong><span>Edits this campaign microsite only.</span><span class="autosave-standard"><span class="dot"></span><span>Supabase connected</span></span></div>
-<div class="visual-editor-shell campaign-visual-shell">
-  <div class="visual-editor-bar">
-    <strong id="campaignEditorName">Campaign</strong>
-    <span class="status-chip draft" id="campaignEditorStatus">Draft</span>
-    <div class="autosave-indicator"><span class="save-dot"></span><span id="campaignAutosaveText">Saved just now</span></div>
-    <div class="spacer"></div>
-    <button class="btn secondary small" id="campaignPreviewBtn">Preview</button>
-    <button class="btn small" id="campaignPublishBtn">Publish</button>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Edit campaign | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-stage2-campaign-microsite-editor"></head><body class="app-body"><div class="app-shell"><aside class="app-sidebar"><div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Client dashboard</small></span></div><div class="workspace-select"><strong>Joe Bloggs</strong><small>Bloggs Ward · Councillor Lite</small></div><nav class="side-nav"><a href="dashboard.html">Dashboard</a><a href="websites.html">Websites</a><a class="active" href="campaigns.html">Campaigns</a><a href="creative.html">Creative</a><a href="people.html">People</a><a href="surveys.html">Surveys</a><a href="domains.html">Domains</a><a href="integrations.html">Integrations</a><a href="settings.html">Settings</a></nav><div class="side-bottom"><div class="user-chip"><span class="avatar">JB</span><span><strong>Joe Bloggs</strong><small>Account owner</small></span></div><a class="side-nav logout-link" style="padding:10px 12px;display:block" href="login.html">Log out</a></div></aside><main class="app-main"><header class="app-topbar"><h1>Campaign</h1><div><a class="btn secondary small" href="campaigns.html">All campaigns</a></div></header><div class="app-content">
+<div class="editor-scope-note">
+  <strong>Campaign microsite editor</strong>
+  <span>Edits this campaign microsite only. Your main website is separate.</span>
+  <span class="autosave-standard" id="campaignMicrositeSaveState"><span class="dot"></span><span>Supabase connected</span></span>
+</div>
+
+<div class="campaign-microsite-editor" id="campaignMicrositeEditor">
+  <div class="campaign-editor-topbar">
+    <div>
+      <a class="text-button" id="campaignBackLink" href="campaigns.html">← Back to campaign</a>
+      <h2 id="campaignMicrositeTitle">Campaign microsite</h2>
+      <p class="muted" id="campaignMicrositeMeta">Loading…</p>
+    </div>
+    <div class="button-row">
+      <button class="btn secondary small" id="campaignMicrositePreview">Preview</button>
+      <button class="btn small" id="campaignMicrositePublish">Publish</button>
+    </div>
   </div>
 
-  <div class="visual-editor-workspace" id="campaignWorkspace">
-    <div class="visual-stage">
-      <div class="visual-canvas desktop" id="campaignVisualCanvas">
-        <iframe class="visual-render" id="campaignFrame" title="Campaign microsite"></iframe>
-        <div class="visual-overlay-layer" id="campaignOverlay"></div>
+  <div class="campaign-editor-workspace" id="campaignMicrositeWorkspace">
+    <div class="campaign-microsite-stage">
+      <div class="campaign-preview-frame-wrap">
+        <iframe id="campaignMicrositeFrame" class="campaign-preview-frame" title="Campaign microsite preview"></iframe>
+        <div id="campaignMicrositeOverlay" class="campaign-editor-overlay"></div>
       </div>
     </div>
 
-    <aside class="drawer" id="campaignDrawer">
-      <div class="drawer-head"><h2 id="campaignDrawerTitle">Edit section</h2><button class="icon-button" id="campaignDrawerClose" type="button">Close</button></div>
-      <div class="drawer-body" id="campaignDrawerBody"></div>
+    <aside class="campaign-editor-drawer" id="campaignMicrositeDrawer">
+      <div class="drawer-head">
+        <h3 id="campaignMicrositeDrawerTitle">Edit campaign</h3>
+        <button class="icon-button" id="campaignMicrositeDrawerClose" type="button">Close</button>
+      </div>
+      <div class="drawer-body" id="campaignMicrositeDrawerBody"></div>
     </aside>
   </div>
 </div>
-</div></main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=20260826-stage2-person-responses"></script><script src="assets/js/app.js?v=20260826-stage2-person-responses"></script><script src="assets/js/supabase-backend.js?v=20260826-stage2-person-responses"></script></body></html>
+</div></main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=20260826-stage2-campaign-microsite-editor"></script><script src="assets/js/app.js?v=20260826-stage2-campaign-microsite-editor"></script><script src="assets/js/supabase-backend.js?v=20260826-stage2-campaign-microsite-editor"></script></body></html>

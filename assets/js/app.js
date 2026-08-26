@@ -971,6 +971,7 @@ function cpSelectedSurvey(){
 })();
 
 (function cpCampaignLibrary(){
+  if(window.CP_STAGE2)return;
   const grid=document.getElementById('campaignLibraryGrid');if(!grid)return;
   function render(){
     const d=CP.db(), campaigns=Object.values(d.campaigns);

@@ -678,6 +678,192 @@
     },true))
   }
 
+
+  function renderStage2CampaignMicrositeEditor(){
+    if(pathname!=='campaign-editor.html')return;
+    const root=document.getElementById('campaignMicrositeEditor');if(!root)return;
+    const id=new URLSearchParams(location.search).get('id');
+    const d=CP.db(),campaign=d.campaigns?.[id];
+    if(!campaign){
+      root.innerHTML='<div class="empty-state-card"><h3>Campaign not found</h3><p>This campaign may have been removed or not finished saving.</p><a class="btn secondary" href="campaigns.html">Back to campaigns</a></div>';
+      return;
+    }
+
+    const website=d.websites?.[campaign.websiteId];
+    const surveys=d.surveys||{};
+    const frame=document.getElementById('campaignMicrositeFrame');
+    const overlay=document.getElementById('campaignMicrositeOverlay');
+    const workspace=document.getElementById('campaignMicrositeWorkspace');
+    const drawer=document.getElementById('campaignMicrositeDrawer');
+    const drawerBody=document.getElementById('campaignMicrositeDrawerBody');
+    const drawerTitle=document.getElementById('campaignMicrositeDrawerTitle');
+    const saveState=document.getElementById('campaignMicrositeSaveState');
+
+    document.getElementById('campaignMicrositeTitle').textContent=campaign.name;
+    document.getElementById('campaignMicrositeMeta').textContent=`${campaign.status} · ${website?.name||'Website'} · ${campaign.slug||''}`;
+    document.getElementById('campaignBackLink').href='campaign-overview.html?id='+encodeURIComponent(id);
+
+    const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const brandNavy=website?.branding?.primary||'#08254a';
+    const brandBlue=website?.branding?.secondary||'#1476d4';
+
+    let signedImage=null;
+    async function resolveImage(){
+      if(!campaign.imagePath){signedImage=null;return}
+      try{signedImage=await window.CPStage2.signedAssetUrl(campaign.imagePath,3600)}catch(e){signedImage=null}
+    }
+
+    function selectedSurvey(){return campaign.surveyId?surveys[campaign.surveyId]:null}
+
+    function campaignHTML(){
+      const survey=selectedSurvey();
+      const pts=(campaign.points||[]).slice(0,3);
+      const vi=campaign.settings?.collect_voting_intention===true;
+      const imprint=campaign.settings?.imprint||`Promoted by ${website?.name||'the campaign'} for ${website?.area||'the local area'}.`;
+      const thankYou=campaign.settings?.thank_you_message||'Thank you for backing the campaign.';
+      return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+      *{box-sizing:border-box}body{margin:0;font-family:"Proxima Nova","Avenir Next",Arial,sans-serif;color:${brandNavy}}.wrap{width:min(940px,calc(100% - 40px));margin:auto}
+      .hero{background:${brandNavy};color:#fff;padding:76px 0}.hero h1{font-size:68px;line-height:.92;letter-spacing:-.045em;margin:0 0 16px}.hero p{font-size:20px;max-width:720px}
+      .image{height:390px;background:#d8e2eb center/cover no-repeat}.points{background:#f2f6fa;padding:50px 0}.pointgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.point{background:#fff;border:1px solid #d7e1eb;padding:18px;font-weight:900}
+      .signup{padding:50px 0}.box{max-width:680px;border:1px solid #d7e1eb;padding:22px}.box input,.box select{width:100%;padding:11px;border:1px solid #cbd7e3;margin:5px 0}.btn{border:0;background:${brandBlue};color:#fff;padding:13px 17px;font-weight:900}
+      footer{background:#061a34;color:#fff;padding:26px 0;font-size:12px}.thankyou{font-size:12px;color:#6b7b90;margin-top:8px}
+      @media(max-width:700px){.hero h1{font-size:50px}.pointgrid{grid-template-columns:1fr}}
+      </style></head><body>
+      <section class="hero" data-campaign-edit="hero"><div class="wrap"><h1>${esc(campaign.headline||campaign.name)}</h1><p>${esc(campaign.support||'')}</p></div></section>
+      <section class="image" data-campaign-edit="image" style="${signedImage?`background-image:url('${signedImage}')`:''}"></section>
+      <section class="points" data-campaign-edit="points"><div class="wrap"><div class="pointgrid">${pts.map(p=>`<div class="point">${esc(p)}</div>`).join('')}</div></div></section>
+      <section class="signup" data-campaign-edit="signup"><div class="wrap"><div class="box"><h2>${survey?esc(survey.name):'Back this campaign'}</h2><input placeholder="First name"><input placeholder="Last name"><input placeholder="Email"><input placeholder="Postcode">${vi?'<select><option>Voting intention (optional)</option></select>':''}<button class="btn">Back the campaign</button><div class="thankyou">${esc(thankYou)}</div></div></div></section>
+      <footer data-campaign-edit="imprint"><div class="wrap">${esc(imprint)}</div></footer>
+      </body></html>`;
+    }
+
+    async function render(){
+      await resolveImage();
+      const doc=frame.contentDocument;doc.open();doc.write(campaignHTML());doc.close();
+      setTimeout(buildHotspots,60)
+    }
+
+    function buildHotspots(){
+      overlay.innerHTML='';
+      const doc=frame.contentDocument;
+      const labels={hero:'Hero',image:'Image',points:'Three key points',signup:'Signup & survey',imprint:'Imprint'};
+      [...doc.querySelectorAll('[data-campaign-edit]')].forEach(node=>{
+        const type=node.dataset.campaignEdit,r=node.getBoundingClientRect();
+        const h=document.createElement('button');
+        h.type='button';h.className='campaign-edit-hotspot';
+        h.style.left=r.left+'px';h.style.top=r.top+'px';h.style.width=r.width+'px';h.style.height=r.height+'px';
+        h.innerHTML=`<span>Edit ${labels[type]}</span>`;
+        h.onclick=()=>openDrawer(type);
+        overlay.appendChild(h)
+      });
+      const height=Math.max(doc.body.scrollHeight,doc.documentElement.scrollHeight);
+      frame.style.height=height+'px';overlay.style.height=height+'px'
+    }
+
+    function saving(){
+      saveState.classList.add('saving');
+      saveState.querySelector('span:last-child').textContent='Saving…'
+    }
+    function saved(){
+      saveState.classList.remove('saving');
+      saveState.querySelector('span:last-child').textContent='Saved just now'
+    }
+    async function persist(changes){
+      saving();
+      Object.assign(campaign,changes);
+      const r=await sb.from('campaigns').update({
+        name:campaign.name,
+        slug:campaign.slug||null,
+        status:String(campaign.status||'Draft').toLowerCase(),
+        headline:campaign.headline||campaign.name,
+        supporting_copy:campaign.support||'',
+        image_path:campaign.imagePath||null,
+        key_points:campaign.points||[],
+        survey_id:campaign.surveyId||null,
+        settings:campaign.settings||{}
+      }).eq('id',campaign.id).select().single();
+      if(r.error){showBackendError('Could not save campaign microsite: '+r.error.message);saved();return}
+      const db=CP.db();db.campaigns[campaign.id]=campaign;CP.save(db);saved();await render()
+    }
+
+    function field(label,id,value,type='input'){
+      if(type==='textarea')return `<label class="field"><span>${label}</span><textarea id="${id}">${esc(value||'')}</textarea></label>`;
+      return `<label class="field"><span>${label}</span><input id="${id}" value="${esc(value||'')}"></label>`
+    }
+
+    function openDrawer(type){
+      workspace.classList.add('drawer-open');
+      drawerTitle.textContent='Edit '+({hero:'hero',image:'image',points:'three key points',signup:'signup & survey',imprint:'imprint'}[type]);
+      let html='';
+      if(type==='hero'){
+        html=field('Headline','cmHeadline',campaign.headline||campaign.name,'textarea')+field('Supporting copy','cmSupport',campaign.support||'','textarea');
+      } else if(type==='image'){
+        html=`<label class="field"><span>Campaign image</span><input id="cmImage" type="file" accept="image/*"></label><p class="muted">One image only. It is stored in the private Supabase campaign-assets bucket.</p>${campaign.imagePath?'<button class="btn secondary small" id="cmRemoveImage">Remove image</button>':''}`;
+      } else if(type==='points'){
+        html=[0,1,2].map(i=>field(`Key point ${i+1}`,'cmPoint'+i,(campaign.points||[])[i]||'','textarea')).join('');
+      } else if(type==='signup'){
+        const options=Object.values(surveys).map(s=>`<option value="${s.id}" ${campaign.surveyId===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
+        html=`<label class="field"><span>Survey</span><select id="cmSurvey"><option value="">No linked survey</option>${options}</select></label>
+        <label class="toggle-row"><input id="cmVI" type="checkbox" ${campaign.settings?.collect_voting_intention?'checked':''}> <span>Ask voting intention (optional)</span></label>
+        ${field('Thank-you message','cmThanks',campaign.settings?.thank_you_message||'Thank you for backing the campaign.','textarea')}`;
+      } else if(type==='imprint'){
+        html=field('Imprint','cmImprint',campaign.settings?.imprint||`Promoted by ${website?.name||'the campaign'} for ${website?.area||'the local area'}.`,'textarea');
+      }
+      drawerBody.innerHTML=html;
+
+      const headline=document.getElementById('cmHeadline');
+      const support=document.getElementById('cmSupport');
+      if(headline)headline.onchange=()=>persist({headline:headline.value,support:support.value});
+      if(support)support.onchange=()=>persist({headline:headline.value,support:support.value});
+
+      [0,1,2].forEach(i=>{
+        const el=document.getElementById('cmPoint'+i);if(!el)return;
+        el.onchange=()=>{const pts=[...(campaign.points||[])];pts[i]=el.value;persist({points:pts})}
+      });
+
+      const survey=document.getElementById('cmSurvey');
+      if(survey)survey.onchange=()=>persist({surveyId:survey.value||null});
+
+      const vi=document.getElementById('cmVI');
+      if(vi)vi.onchange=()=>persist({settings:{...(campaign.settings||{}),collect_voting_intention:vi.checked}});
+
+      const thanks=document.getElementById('cmThanks');
+      if(thanks)thanks.onchange=()=>persist({settings:{...(campaign.settings||{}),thank_you_message:thanks.value}});
+
+      const imprint=document.getElementById('cmImprint');
+      if(imprint)imprint.onchange=()=>persist({settings:{...(campaign.settings||{}),imprint:imprint.value}});
+
+      const image=document.getElementById('cmImage');
+      if(image)image.onchange=async()=>{
+        const file=image.files?.[0];if(!file)return;
+        try{
+          saving();
+          const path=await window.CPStage2.uploadAsset(file,`campaigns/${campaign.id}`);
+          await persist({imagePath:path})
+        }catch(e){showBackendError('Could not upload campaign image: '+e.message);saved()}
+      };
+      const remove=document.getElementById('cmRemoveImage');
+      if(remove)remove.onclick=()=>persist({imagePath:null});
+    }
+
+    document.getElementById('campaignMicrositeDrawerClose').onclick=()=>workspace.classList.remove('drawer-open');
+    document.getElementById('campaignMicrositePublish').onclick=async()=>{
+      saving();
+      const snap=await sb.from('publish_versions').insert({
+        account_id:d.account.id,entity_type:'campaign',entity_id:campaign.id,label:'Published version',
+        snapshot:{...campaign}
+      });
+      if(snap.error){showBackendError('Could not create publish version: '+snap.error.message);saved();return}
+      await persist({status:'Published'});
+      document.getElementById('campaignMicrositeMeta').textContent=`Published · ${website?.name||'Website'} · ${campaign.slug||''}`
+    };
+    document.getElementById('campaignMicrositePreview').onclick=()=>{
+      const win=window.open('','_blank');if(!win)return;
+      win.document.open();win.document.write(campaignHTML());win.document.close()
+    };
+    render()
+  }
+
   function renderStage2People(){
     if(pathname!=='people.html')return;
     const table=document.querySelector('.table-card table'),filterHost=document.getElementById('stage2PeopleFilters');
@@ -758,6 +944,7 @@
       installCPBridge();
       bindTransactionalCreates();
       renderStage2People();
+      renderStage2CampaignMicrositeEditor();
       renderStage2Person();
       enhanceStage2SurveyOverview();
       enhanceStage2SurveyEditorResults();
