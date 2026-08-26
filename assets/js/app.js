@@ -809,7 +809,7 @@ function saveSurveyQuestions(q){localStorage.setItem('cpSurvey:'+cpCurrentSiteId
       const h=history();
       const template=new URLSearchParams(location.search).get('template')||'announcement';
       const image=art?.querySelector('.creative-photo')?.style.backgroundImage?.replace(/^url\(["']?/,'').replace(/["']?\)$/,'')||'';
-      h.unshift({title:document.getElementById('creativeTitle')?.textContent||'Campaign graphic',template,format:canvas?.className.split(' ').pop()||'square',image,savedAt:new Date().toISOString()});
+      h.unshift({title:document.getElementById('creativeTitle')?.textContent||'Campaign graphic',template,format:canvas?.className.split(' ').pop()||'square',image,preview:cpCreativeSnapshot(),savedAt:new Date().toISOString()});
       saveHistory(h.slice(0,24));
       const old=saveBtn.textContent;saveBtn.textContent='Saved';setTimeout(()=>saveBtn.textContent=old,1000)
     })
@@ -982,7 +982,7 @@ function cpSelectedSurvey(){
 (function cpCreativeLibrary(){
   const grid=document.getElementById('sharedGraphicLibrary');if(!grid)return;
   const graphics=CP.list('graphics');
-  grid.innerHTML=graphics.length?graphics.map(g=>`<article class="saved-graphic-card"><div class="saved-graphic-thumb"></div><div class="saved-graphic-card-body"><h4>${g.title||'Campaign graphic'}</h4><small>${g.format||'square'}${g.campaignId?' · linked to campaign':''}</small><div class="library-card-actions"><a class="btn secondary small" href="creative-editor.html?template=${g.type||'announcement'}&saved=${g.id}">Edit again</a><button class="btn secondary small" data-del="${g.id}">Delete</button></div></div></article>`).join(''):'<div class="empty-state-card"><h3>No saved graphics yet</h3><p>Create a graphic and save it to keep it here.</p></div>';
+  grid.innerHTML=graphics.length?graphics.map(g=>`<article class="saved-graphic-card"><div class="saved-graphic-thumb">${g.preview?`<img src="${g.preview}" alt="">`:g.image?`<img src="${g.image}" alt="">`:''}</div><div class="saved-graphic-card-body"><h4>${g.title||'Campaign graphic'}</h4><small>${g.format||'square'}${g.campaignId?' · linked to campaign':''}</small><div class="library-card-actions"><a class="btn secondary small" href="creative-editor.html?template=${g.type||'announcement'}&saved=${g.id}">Edit again</a><button class="btn secondary small" data-del="${g.id}">Delete</button></div></div></article>`).join(''):'<div class="empty-state-card"><h3>No saved graphics yet</h3><p>Create a graphic and save it to keep it here.</p></div>';
   grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{CP.remove('graphics',b.dataset.del);location.reload()})
 })();
 
@@ -1010,15 +1010,23 @@ function cpSelectedSurvey(){
     const type=params.get('template')||'announcement';
     const title=document.getElementById('creativeTitle')?.textContent||'Campaign graphic';
     const format=document.getElementById('creativeCanvas')?.className.split(' ').pop()||'square';
-    CP.saveGraphic({campaignId,type,title,format});
+    CP.saveGraphic({campaignId,type,title,format,preview:cpCreativeSnapshot()});
   },true)
 })();
+
 
 /* =========================================================
    SURVEY LIBRARY + DEDICATED EDITOR
    ========================================================= */
 (function surveyCardLibrary(){
   const grid=document.getElementById('surveyCardGrid'); if(!grid) return;
+
+  function miniPreview(s){
+    const enabled=(s.questions||[]).filter(q=>q.enabled).slice(0,3);
+    return `<div class="survey-card-preview">${enabled.map((q,i)=>`
+      <div class="survey-card-preview-line ${i? 'short':''}"></div>
+      <div class="survey-card-preview-field"></div>`).join('')}</div>`;
+  }
 
   function render(){
     const d=CP.db();
@@ -1034,7 +1042,8 @@ function cpSelectedSurvey(){
           <button class="survey-card-menu" type="button">•••</button>
         </div>
         <h3>${s.name}</h3>
-        <p>${s.questions.filter(q=>q.enabled).length} active questions</p>
+        <p>${(s.questions||[]).filter(q=>q.enabled).length} active questions</p>
+        ${miniPreview(s)}
         <div class="survey-card-meta">
           <span>${s.responses||0} responses</span>
           ${websiteSelected?'<span class="sync-badge">Used on website</span>':''}
@@ -1072,7 +1081,6 @@ function cpSelectedSurvey(){
       const name=prompt('Survey name','New survey');
       if(!name)return;
       const s=CP.createSurvey(name);
-      // Start with a practical default set rather than blank.
       CP.patch('surveys',s.id,{
         questions:[
           {id:CP.uid('q'),type:'single',label:'What matters most to you?',enabled:true,options:['Option 1','Option 2','Option 3']},
@@ -1090,54 +1098,77 @@ function cpSelectedSurvey(){
   const builder=document.getElementById('sharedQuestionBuilder'); if(!builder) return;
   const id=new URLSearchParams(location.search).get('id');
   let survey=CP.get('surveys',id);
-  if(!survey){
-    location.href='surveys.html';
-    return;
-  }
+  if(!survey){ location.href='surveys.html'; return; }
   let questions=JSON.parse(JSON.stringify(survey.questions||[]));
   const preview=document.getElementById('sharedSurveyPreview');
-
   document.getElementById('surveyEditTitle').textContent=survey.name;
 
   function saveChanges(extra={}){
     survey=CP.patch('surveys',id,{questions,...extra});
   }
 
-  function renderPreviewQuestion(q){
-    if(q.type==='text')return `<div class="preview-question"><label>${q.label}</label><textarea></textarea></div>`;
-    if(q.type==='single')return `<div class="preview-question"><label>${q.label}</label><select><option>Select</option>${(q.options||[]).map(o=>`<option>${o}</option>`).join('')}</select></div>`;
-    if(q.type==='multi')return `<div class="preview-question"><label>${q.label}</label><div class="choice-list">${(q.options||[]).map(o=>`<label><input type="checkbox"> ${o}</label>`).join('')}</div></div>`;
-    if(q.type==='yesno')return `<div class="preview-question"><label>${q.label}</label><div class="yesno"><span>Yes</span><span>No</span></div></div>`;
-    if(q.type==='rating')return `<div class="preview-question"><label>${q.label}</label><div class="rating-row">${[1,2,3,4,5].map(n=>`<span>${n}</span>`).join('')}</div></div>`;
-    return `<div class="preview-question"><label>${q.label}</label><input></div>`;
+  function escp(s){
+    return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function previewQuestion(q){
+    const label=`<label>${escp(q.label)}</label>`;
+    if(q.type==='text') return `<div class="preview-question">${label}<textarea placeholder="Type your answer"></textarea></div>`;
+    if(q.type==='single') return `<div class="preview-question">${label}<select><option value="">Select an option</option>${(q.options||[]).map(o=>`<option>${escp(o)}</option>`).join('')}</select></div>`;
+    if(q.type==='multi') return `<div class="preview-question">${label}<div class="preview-choice-list">${(q.options||[]).map(o=>`<label><input type="checkbox"> ${escp(o)}</label>`).join('')}</div></div>`;
+    if(q.type==='yesno') return `<div class="preview-question">${label}<div class="preview-yesno"><button type="button">Yes</button><button type="button">No</button></div></div>`;
+    if(q.type==='rating') return `<div class="preview-question">${label}<div class="preview-rating">${[1,2,3,4,5].map(n=>`<button type="button">${n}</button>`).join('')}</div></div>`;
+    if(q.type==='postcode') return `<div class="preview-question">${label}<input type="text" placeholder="Postcode"></div>`;
+    if(q.type==='phone') return `<div class="preview-question">${label}<input type="tel" placeholder="Phone number"></div>`;
+    return `<div class="preview-question">${label}<input type="text"></div>`;
+  }
+
+  function renderPreview(){
+    const enabled=questions.filter(q=>q.enabled);
+    preview.innerHTML=`<div class="preview-form-shell">
+      ${enabled.map(previewQuestion).join('')}
+      ${enabled.length?'<button class="btn preview-submit" type="button">Send my views</button>':'<p class="muted">No questions enabled.</p>'}
+    </div><p class="survey-preview-note">This is the same question set the website will use when this survey is selected.</p>`;
   }
 
   function render(){
     builder.innerHTML=questions.map((q,i)=>`<article class="question-card" data-index="${i}">
       <div class="question-card-head">
         <div>
-          <span class="question-type">${q.type.replace('single','Single choice').replace('multi','Multiple choice').replace('text','Open text').replace('yesno','Yes / No')}</span>
-          <strong style="display:block;margin-top:3px">${q.label}</strong>
+          <span class="question-type">${escp(q.type.replace('single','Single choice').replace('multi','Multiple choice').replace('text','Open text').replace('yesno','Yes / No'))}</span>
+          <strong style="display:block;margin-top:3px">${escp(q.label)}</strong>
         </div>
         <div class="question-controls">
           <button class="q-up">↑</button><button class="q-down">↓</button><button class="q-duplicate">Duplicate</button><button class="q-delete">Remove</button>
         </div>
       </div>
       <div class="question-grid">
-        <label class="field"><span>Question</span><input class="q-label" value="${q.label.replace(/"/g,'&quot;')}"></label>
+        <label class="field"><span>Question</span><input class="q-label" value="${escp(q.label)}"></label>
         <label class="question-visibility"><input class="q-enabled" type="checkbox" ${q.enabled?'checked':''}> Show on website</label>
       </div>
-      ${['single','multi'].includes(q.type)?`<label class="field question-options"><span>Options — one per line</span><textarea class="q-options">${(q.options||[]).join('\n')}</textarea></label>`:''}
+      ${['single','multi'].includes(q.type)?`<label class="field question-options"><span>Options — one per line</span><textarea class="q-options">${escp((q.options||[]).join('\n'))}</textarea></label>`:''}
     </article>`).join('');
 
-    preview.innerHTML=questions.filter(q=>q.enabled).map(renderPreviewQuestion).join('')||'<p class="muted">No questions enabled.</p>';
+    renderPreview();
 
     builder.querySelectorAll('.question-card').forEach(card=>{
       const i=+card.dataset.index;
-      card.querySelector('.q-label').onchange=e=>{questions[i].label=e.target.value;saveChanges();render()};
-      card.querySelector('.q-enabled').onchange=e=>{questions[i].enabled=e.target.checked;saveChanges();render()};
+      card.querySelector('.q-label').oninput=e=>{
+        questions[i].label=e.target.value;
+        saveChanges();
+        renderPreview();
+      };
+      card.querySelector('.q-enabled').onchange=e=>{
+        questions[i].enabled=e.target.checked;
+        saveChanges();
+        render();
+      };
       const opts=card.querySelector('.q-options');
-      if(opts)opts.onchange=e=>{questions[i].options=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);saveChanges();render()};
+      if(opts)opts.oninput=e=>{
+        questions[i].options=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);
+        saveChanges();
+        renderPreview();
+      };
       card.querySelector('.q-delete').onclick=()=>{questions.splice(i,1);saveChanges();render()};
       card.querySelector('.q-duplicate').onclick=()=>{questions.splice(i+1,0,{...JSON.parse(JSON.stringify(questions[i])),id:CP.uid('q')});saveChanges();render()};
       card.querySelector('.q-up').onclick=()=>{if(i>0){[questions[i-1],questions[i]]=[questions[i],questions[i-1]];saveChanges();render()}};
@@ -1166,12 +1197,32 @@ function cpSelectedSurvey(){
   document.querySelectorAll('[data-editor-tab]').forEach(btn=>btn.onclick=()=>{
     document.querySelectorAll('[data-editor-tab]').forEach(x=>x.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('surveyEditorQuestions').classList.toggle('active',btn.dataset.editorTab==='questions');
-    document.getElementById('surveyEditorResults').classList.toggle('active',btn.dataset.editorTab==='results');
-    if(btn.dataset.editorTab==='results'){
-      document.getElementById('sharedSurveyResults').innerHTML=`<div class="kpi-grid"><div class="card kpi"><strong>${survey.responses||0}</strong><span>Responses</span></div></div>`;
+    const questionsPanel=document.getElementById('surveyEditorQuestions');
+    const resultsPanel=document.getElementById('surveyEditorResults');
+    const isQuestions=btn.dataset.editorTab==='questions';
+    questionsPanel.classList.toggle('active',isQuestions);
+    resultsPanel.classList.toggle('active',!isQuestions);
+    if(!isQuestions){
+      survey=CP.get('surveys',id);
+      document.getElementById('sharedSurveyResults').innerHTML=`<div class="kpi-grid"><div class="card kpi"><strong>${survey.responses||0}</strong><span>Responses</span></div><div class="card kpi"><strong>${questions.filter(q=>q.enabled).length}</strong><span>Active questions</span></div></div>`;
     }
   });
 
   render();
 })();
+
+
+function cpCreativeSnapshot(){
+  const art=document.getElementById('creativeArt');
+  if(!art)return '';
+  const canvas=document.getElementById('creativeCanvas');
+  const w=canvas?.clientWidth||720, h=canvas?.clientHeight||720;
+  const clone=art.cloneNode(true);
+  clone.querySelectorAll('.creative-hotspot').forEach(x=>x.remove());
+  const cssText=[...document.styleSheets].map(sheet=>{
+    try{return [...sheet.cssRules].map(r=>r.cssText).join('\n')}catch(e){return ''}
+  }).join('\n');
+  const markup=new XMLSerializer().serializeToString(clone);
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${cssText}</style>${markup}</div></foreignObject></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
