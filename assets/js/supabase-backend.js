@@ -1,8 +1,7 @@
 
 /* =========================================================
    STAGE 2 — SUPABASE BACKEND BRIDGE
-   Supabase is authoritative. localStorage is now a UI cache
-   so the existing visual prototype can stay synchronous.
+   Supabase is authoritative. localStorage is a synchronous UI cache for the signed-in local account.
    ========================================================= */
 (() => {
   'use strict';
@@ -227,7 +226,7 @@ localStorage.setItem(DB_KEY,JSON.stringify(local));
   // Auth UI
   // -------------------------------------------------------
   async function bindAuth(){
-    const login=document.querySelector('form[data-demo-login]');
+    const login=document.querySelector('form[data-stage2-login]');
     if(login){
       const email=login.querySelector('input[type=email]');
       const password=login.querySelector('input[type=password]');
@@ -388,7 +387,7 @@ localStorage.setItem(DB_KEY,JSON.stringify(local));
     }
 
     // Survey library is dynamically rendered. Capture the click so the
-    // prototype prompt handler never gets a chance to run.
+    // obsolete local handler never gets a chance to run.
     document.addEventListener('click',e=>{
       const surveyCreate=e.target.closest('#createAnotherSurvey,#createFirstSurvey');
       if(surveyCreate){
@@ -572,7 +571,7 @@ localStorage.setItem(DB_KEY,JSON.stringify(local));
     const id=new URLSearchParams(location.search).get('id');
     const d=CP.db(),p=d.people?.[id];
     if(!p){
-      root.innerHTML=`<a class="text-button" href="people.html">← Back to people</a><div class="empty-state-card" style="margin-top:18px"><h3>Supporter not found</h3><p>This supporter may have been removed, or this is an old prototype link.</p><a class="btn secondary" href="people.html">Open People</a></div>`;
+      root.innerHTML=`<a class="text-button" href="people.html">← Back to people</a><div class="empty-state-card" style="margin-top:18px"><h3>Supporter not found</h3><p>This supporter may have been removed, or this is an old link.</p><a class="btn secondary" href="people.html">Open People</a></div>`;
       return;
     }
     const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -979,7 +978,7 @@ localStorage.setItem(DB_KEY,JSON.stringify(local));
       if(last&&/Supabase/i.test(last.textContent))last.textContent='Saved';
     });
 
-    document.querySelectorAll('[data-prototype],[data-demo]').forEach(el=>el.remove());
+    document.querySelectorAll('[data-obsolete]').forEach(el=>el.remove());
   }
 
   // -------------------------------------------------------
