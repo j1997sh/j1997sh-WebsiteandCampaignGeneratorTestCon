@@ -1,6 +1,6 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Domains | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-stage3b"></head>
+<title>Domains | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-domain-modal-fix"></head>
 <body class="app-body"><div class="app-shell">
 <aside class="app-sidebar">
   <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Workspace</small></span></div>
@@ -15,8 +15,8 @@
 </div></main></div>
 <div class="cp-dialog-backdrop" id="domainDialog" hidden>
   <div class="cp-dialog domain-dialog">
-    <div class="cp-dialog-head"><h3>Connect domain</h3><button class="cp-dialog-x" id="domainDialogClose">×</button></div>
-    <form id="domainForm">
+    <div class="cp-dialog-head"><h3>Connect domain</h3><button class="cp-dialog-x" id="domainDialogClose" type="button" aria-label="Close">×</button></div>
+    <form id="domainForm" novalidate>
       <label class="field"><span>Domain</span><input id="domainHostname" placeholder="example.org" required></label>
       <label class="field"><span>Connect to</span><select id="domainTargetType"><option value="website">Website</option><option value="campaign">Campaign microsite</option></select></label>
       <label class="field"><span>Choose item</span><select id="domainTargetId"></select></label>
@@ -26,4 +26,4 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase-config.js?v=20260826-stage3a"></script>
-<script src="assets/js/domains-stage3.js?v=20260826-stage3a"></script></body></html>
+<script src="assets/js/domains-stage3.js?v=20260826-domain-modal-fix"></script></body></html>
