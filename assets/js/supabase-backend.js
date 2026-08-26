@@ -194,7 +194,19 @@
       (local.history[key] ||= []).push({id:v.id,label:v.label||'Published version',time:v.created_at,data:v.snapshot});
     });
 
-    localStorage.setItem(DB_KEY,JSON.stringify(local));
+    
+  // Stage 3E isolation hardening: local workspace cache must contain only
+  // rows belonging to the currently authenticated local account.
+  if (account && account.id) {
+    ['websites','campaigns','surveys','graphics','people','actions'].forEach(function(key){
+      if (Array.isArray(db[key])) {
+        db[key] = db[key].filter(function(row){
+          return !row || !row.accountId && !row.account_id || row.accountId === account.id || row.account_id === account.id;
+        });
+      }
+    });
+  }
+localStorage.setItem(DB_KEY,JSON.stringify(local));
     if(active){
       localStorage.setItem('cpCurrentSite',active);
       localStorage.setItem('cpCurrentSiteShared',active);
