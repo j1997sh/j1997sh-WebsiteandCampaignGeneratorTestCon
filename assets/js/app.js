@@ -686,7 +686,7 @@ function saveSurveyQuestions(q){localStorage.setItem('cpSurvey:'+cpCurrentSiteId
 
 /* ---------- Survey builder functionality ---------- */
 (function surveyBuilder(){
-  const app=document.querySelector('.app-content');if(!app||!location.pathname.endsWith('surveys.html'))return;
+  const app=document.querySelector('.app-content');if(!app||!location.pathname.endsWith('__legacy-surveys-disabled.html'))return;
   app.innerHTML=`
   <div class="page-intro"><div><h2>Surveys</h2><p>Build the questions on your website and review the results.</p></div><button class="btn small" id="saveSurveyBtn">Save survey</button></div>
   <div class="survey-tabs"><button class="survey-tab active" data-tab="questions">Questions</button><button class="survey-tab" data-tab="results">Results</button></div>
@@ -839,7 +839,7 @@ function cpSelectedSurvey(){
 }
 
 (function multiSurveyPage(){
-  const grid=document.getElementById('surveyLibraryGrid');if(!grid)return;
+  const grid=document.getElementById('__legacySurveyLibraryGrid');if(!grid)return;
   const libraryView=document.getElementById('surveyLibraryView'),editorView=document.getElementById('surveyEditorView');
   let lib=cpSurveyLibrary(),current=null,q=[];
   const esc2=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -911,7 +911,7 @@ function cpSelectedSurvey(){
 })();
 
 (function cpSurveyLibraryUI(){
-  const grid=document.getElementById('surveyLibraryGrid');if(!grid)return;
+  const grid=document.getElementById('__legacySurveyLibraryGrid');if(!grid)return;
   const libraryView=document.getElementById('surveyLibraryView'),editorView=document.getElementById('surveyEditorView');
   let currentId=null, working=[];
   function renderLibrary(){
@@ -1012,4 +1012,166 @@ function cpSelectedSurvey(){
     const format=document.getElementById('creativeCanvas')?.className.split(' ').pop()||'square';
     CP.saveGraphic({campaignId,type,title,format});
   },true)
+})();
+
+/* =========================================================
+   SURVEY LIBRARY + DEDICATED EDITOR
+   ========================================================= */
+(function surveyCardLibrary(){
+  const grid=document.getElementById('surveyCardGrid'); if(!grid) return;
+
+  function render(){
+    const d=CP.db();
+    const surveys=Object.values(d.surveys);
+    const active=d.websites[d.activeWebsiteId];
+
+    grid.innerHTML=surveys.map(s=>{
+      const websiteSelected=active?.surveyId===s.id;
+      const campaigns=Object.values(d.campaigns).filter(c=>c.surveyId===s.id);
+      return `<article class="survey-card">
+        <div class="survey-card-top">
+          <span class="status-chip ${s.status==='Published'?'published':'draft'}">${s.status}</span>
+          <button class="survey-card-menu" type="button">•••</button>
+        </div>
+        <h3>${s.name}</h3>
+        <p>${s.questions.filter(q=>q.enabled).length} active questions</p>
+        <div class="survey-card-meta">
+          <span>${s.responses||0} responses</span>
+          ${websiteSelected?'<span class="sync-badge">Used on website</span>':''}
+        </div>
+        ${campaigns.length?`<p class="assignment-note">Used by ${campaigns.map(c=>c.name).join(', ')}</p>`:''}
+        <div class="library-card-actions">
+          <a class="btn small" href="survey-editor.html?id=${s.id}">Edit survey</a>
+          <button class="btn secondary small" data-use="${s.id}">${websiteSelected?'Selected':'Use on website'}</button>
+          <button class="btn secondary small" data-duplicate="${s.id}">Duplicate</button>
+          <button class="btn secondary small" data-delete="${s.id}">Delete</button>
+        </div>
+      </article>`
+    }).join('') + `
+      <article class="survey-card create-card">
+        <h3>Create another survey</h3>
+        <p>Use a separate survey for a local issue, campaign or audience.</p>
+        <button class="btn secondary" id="createAnotherSurvey" style="margin-top:18px">Create survey</button>
+      </article>`;
+
+    grid.querySelectorAll('[data-use]').forEach(btn=>btn.onclick=()=>{
+      CP.assignSurvey('website',d.activeWebsiteId,btn.dataset.use);
+      render();
+    });
+    grid.querySelectorAll('[data-duplicate]').forEach(btn=>btn.onclick=()=>{
+      CP.duplicate('surveys',btn.dataset.duplicate);
+      render();
+    });
+    grid.querySelectorAll('[data-delete]').forEach(btn=>btn.onclick=()=>{
+      if(confirm('Delete this survey?')){
+        CP.remove('surveys',btn.dataset.delete);
+        render();
+      }
+    });
+    document.getElementById('createAnotherSurvey').onclick=()=>{
+      const name=prompt('Survey name','New survey');
+      if(!name)return;
+      const s=CP.createSurvey(name);
+      // Start with a practical default set rather than blank.
+      CP.patch('surveys',s.id,{
+        questions:[
+          {id:CP.uid('q'),type:'single',label:'What matters most to you?',enabled:true,options:['Option 1','Option 2','Option 3']},
+          {id:CP.uid('q'),type:'text',label:'Tell us more',enabled:true,options:[]},
+          {id:CP.uid('q'),type:'yesno',label:'Would you like campaign updates by email?',enabled:true,options:['Yes','No']}
+        ]
+      });
+      location.href='survey-editor.html?id='+s.id;
+    };
+  }
+  render();
+})();
+
+(function sharedSurveyEditor(){
+  const builder=document.getElementById('sharedQuestionBuilder'); if(!builder) return;
+  const id=new URLSearchParams(location.search).get('id');
+  let survey=CP.get('surveys',id);
+  if(!survey){
+    location.href='surveys.html';
+    return;
+  }
+  let questions=JSON.parse(JSON.stringify(survey.questions||[]));
+  const preview=document.getElementById('sharedSurveyPreview');
+
+  document.getElementById('surveyEditTitle').textContent=survey.name;
+
+  function saveChanges(extra={}){
+    survey=CP.patch('surveys',id,{questions,...extra});
+  }
+
+  function renderPreviewQuestion(q){
+    if(q.type==='text')return `<div class="preview-question"><label>${q.label}</label><textarea></textarea></div>`;
+    if(q.type==='single')return `<div class="preview-question"><label>${q.label}</label><select><option>Select</option>${(q.options||[]).map(o=>`<option>${o}</option>`).join('')}</select></div>`;
+    if(q.type==='multi')return `<div class="preview-question"><label>${q.label}</label><div class="choice-list">${(q.options||[]).map(o=>`<label><input type="checkbox"> ${o}</label>`).join('')}</div></div>`;
+    if(q.type==='yesno')return `<div class="preview-question"><label>${q.label}</label><div class="yesno"><span>Yes</span><span>No</span></div></div>`;
+    if(q.type==='rating')return `<div class="preview-question"><label>${q.label}</label><div class="rating-row">${[1,2,3,4,5].map(n=>`<span>${n}</span>`).join('')}</div></div>`;
+    return `<div class="preview-question"><label>${q.label}</label><input></div>`;
+  }
+
+  function render(){
+    builder.innerHTML=questions.map((q,i)=>`<article class="question-card" data-index="${i}">
+      <div class="question-card-head">
+        <div>
+          <span class="question-type">${q.type.replace('single','Single choice').replace('multi','Multiple choice').replace('text','Open text').replace('yesno','Yes / No')}</span>
+          <strong style="display:block;margin-top:3px">${q.label}</strong>
+        </div>
+        <div class="question-controls">
+          <button class="q-up">↑</button><button class="q-down">↓</button><button class="q-duplicate">Duplicate</button><button class="q-delete">Remove</button>
+        </div>
+      </div>
+      <div class="question-grid">
+        <label class="field"><span>Question</span><input class="q-label" value="${q.label.replace(/"/g,'&quot;')}"></label>
+        <label class="question-visibility"><input class="q-enabled" type="checkbox" ${q.enabled?'checked':''}> Show on website</label>
+      </div>
+      ${['single','multi'].includes(q.type)?`<label class="field question-options"><span>Options — one per line</span><textarea class="q-options">${(q.options||[]).join('\n')}</textarea></label>`:''}
+    </article>`).join('');
+
+    preview.innerHTML=questions.filter(q=>q.enabled).map(renderPreviewQuestion).join('')||'<p class="muted">No questions enabled.</p>';
+
+    builder.querySelectorAll('.question-card').forEach(card=>{
+      const i=+card.dataset.index;
+      card.querySelector('.q-label').onchange=e=>{questions[i].label=e.target.value;saveChanges();render()};
+      card.querySelector('.q-enabled').onchange=e=>{questions[i].enabled=e.target.checked;saveChanges();render()};
+      const opts=card.querySelector('.q-options');
+      if(opts)opts.onchange=e=>{questions[i].options=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);saveChanges();render()};
+      card.querySelector('.q-delete').onclick=()=>{questions.splice(i,1);saveChanges();render()};
+      card.querySelector('.q-duplicate').onclick=()=>{questions.splice(i+1,0,{...JSON.parse(JSON.stringify(questions[i])),id:CP.uid('q')});saveChanges();render()};
+      card.querySelector('.q-up').onclick=()=>{if(i>0){[questions[i-1],questions[i]]=[questions[i],questions[i-1]];saveChanges();render()}};
+      card.querySelector('.q-down').onclick=()=>{if(i<questions.length-1){[questions[i+1],questions[i]]=[questions[i],questions[i+1]];saveChanges();render()}};
+    });
+  }
+
+  document.querySelectorAll('[data-shared-add]').forEach(btn=>btn.onclick=()=>{
+    const type=btn.dataset.sharedAdd;
+    const labels={text:'Your question',single:'Choose one option',multi:'Choose any that apply',yesno:'Yes or no?',rating:'How would you rate this?',postcode:'What is your postcode?',phone:'What is your phone number?'};
+    questions.push({id:CP.uid('q'),type,label:labels[type],enabled:true,options:['Option 1','Option 2','Option 3']});
+    saveChanges();render();
+  });
+
+  document.getElementById('surveyEditorSave').onclick=()=>{
+    saveChanges({status:'Published'});
+    const btn=document.getElementById('surveyEditorSave');
+    btn.textContent='Saved';
+    setTimeout(()=>btn.textContent='Save survey',900);
+  };
+  document.getElementById('surveyEditorDuplicate').onclick=()=>{
+    const copy=CP.duplicate('surveys',id);
+    if(copy) location.href='survey-editor.html?id='+copy.id;
+  };
+
+  document.querySelectorAll('[data-editor-tab]').forEach(btn=>btn.onclick=()=>{
+    document.querySelectorAll('[data-editor-tab]').forEach(x=>x.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('surveyEditorQuestions').classList.toggle('active',btn.dataset.editorTab==='questions');
+    document.getElementById('surveyEditorResults').classList.toggle('active',btn.dataset.editorTab==='results');
+    if(btn.dataset.editorTab==='results'){
+      document.getElementById('sharedSurveyResults').innerHTML=`<div class="kpi-grid"><div class="card kpi"><strong>${survey.responses||0}</strong><span>Responses</span></div></div>`;
+    }
+  });
+
+  render();
 })();

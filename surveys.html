@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Surveys | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-0845"></head>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Surveys | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-0855"></head>
 <body class="app-body"><div class="app-shell"><aside class="app-sidebar">
       <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Client dashboard</small></span></div>
       <div class="workspace-select">
@@ -18,16 +18,13 @@
           </div>
           <a class="btn secondary small" href="public-site.html">View public site</a>
         </div></header><div class="app-content">
-<div id="surveyLibraryView">
-  <div class="page-intro"><div><h2>Surveys</h2><p>Create multiple surveys, reuse them and choose where each one appears.</p></div><button class="btn small" id="newSurveyBtn">New survey</button></div>
-  <div class="survey-library-grid" id="surveyLibraryGrid"></div>
+<div class="survey-library-page">
+  <div class="page-intro">
+    <div>
+      <h2>Surveys</h2>
+      <p>Create and manage surveys for your website and campaign microsites.</p>
+    </div>
+  </div>
+  <div class="survey-card-grid" id="surveyCardGrid"></div>
 </div>
-<div id="surveyEditorView" style="display:none">
-  <div class="page-intro"><div><button class="text-button" id="backToSurveyLibrary">← All surveys</button><h2 id="surveyEditorName">Survey</h2><p>Build questions and review responses.</p></div><div class="button-row"><button class="btn secondary small" id="duplicateSurveyBtn">Duplicate</button><button class="btn small" id="saveSurveyBtn">Save survey</button></div></div>
-  <div class="survey-tabs"><button class="survey-tab active" data-tab="questions">Questions</button><button class="survey-tab" data-tab="results">Results</button></div>
-  <section class="survey-panel active" id="surveyQuestionsPanel"><div class="dashboard-grid"><div><div class="question-builder" id="questionBuilder"></div><div class="add-question-menu">
-    <button data-add-q="text">+ Open text</button><button data-add-q="single">+ Single choice</button><button data-add-q="multi">+ Multiple choice</button><button data-add-q="yesno">+ Yes / No</button><button data-add-q="rating">+ Rating 1–5</button><button data-add-q="postcode">+ Postcode</button><button data-add-q="phone">+ Phone</button>
-  </div></div><aside class="survey-preview"><h3>Preview</h3><div id="surveyBuilderPreview"></div></aside></div></section>
-  <section class="survey-panel" id="surveyResultsPanel"><div id="surveyResultsSummary"></div></section>
-</div>
-</div></main></div><script src="assets/js/app.js?v=20260826-0845"></script></body></html>
+</div></main></div><script src="assets/js/app.js?v=20260826-0855"></script></body></html>

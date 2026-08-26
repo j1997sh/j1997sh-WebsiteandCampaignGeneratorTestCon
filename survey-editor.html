@@ -1,0 +1,59 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Edit survey | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-0855"></head>
+<body class="app-body"><div class="app-shell"><aside class="app-sidebar">
+      <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Client dashboard</small></span></div>
+      <div class="workspace-select">
+        <strong id="sidebarSiteName">Joe Bloggs</strong><small id="sidebarSiteMeta">Bloggs Ward · Councillor Lite</small>
+      </div>
+      <nav class="side-nav"><a class="" href="dashboard.html">Dashboard</a><a class="" href="websites.html">Websites</a><a href="campaigns.html">Campaigns</a><a href="creative.html">Creative</a><a class="" href="people.html">People</a><a class="active" href="surveys.html">Surveys</a><a class="" href="domains.html">Domains</a><a href="integrations.html">Integrations</a><a class="" href="settings.html">Settings</a></nav>
+      <div class="side-bottom">
+        <div class="user-chip"><span class="avatar">JB</span><span><strong>Joe Bloggs</strong><small>Account owner</small></span></div>
+        <a class="side-nav logout-link" style="padding:10px 12px;display:block" href="login.html" id="logoutLink">Log out</a>
+      </div>
+    </aside><main class="app-main"><header class="app-topbar"><h1>Survey</h1>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="global-search-wrap">
+            <input class="global-search-input" id="globalSearchInput" placeholder="Search people or websites">
+            <span class="global-search-kbd">⌘K</span>
+            <div class="search-popover" id="globalSearchPopover"></div>
+          </div>
+          <a class="btn secondary small" href="public-site.html">View public site</a>
+        </div></header><div class="app-content">
+<div class="page-intro">
+  <div>
+    <a class="text-button" href="surveys.html">← All surveys</a>
+    <h2 id="surveyEditTitle" style="margin-top:8px">Survey</h2>
+    <p>Build the questions and review the results.</p>
+  </div>
+  <div class="button-row">
+    <button class="btn secondary small" id="surveyEditorDuplicate">Duplicate</button>
+    <button class="btn small" id="surveyEditorSave">Save survey</button>
+  </div>
+</div>
+<div class="survey-tabs">
+  <button class="survey-tab active" data-editor-tab="questions">Questions</button>
+  <button class="survey-tab" data-editor-tab="results">Results</button>
+</div>
+<section id="surveyEditorQuestions" class="survey-panel active">
+  <div class="survey-editor-layout">
+    <div>
+      <div class="question-builder" id="sharedQuestionBuilder"></div>
+      <div class="add-question-menu">
+        <button data-shared-add="text">+ Open text</button>
+        <button data-shared-add="single">+ Single choice</button>
+        <button data-shared-add="multi">+ Multiple choice</button>
+        <button data-shared-add="yesno">+ Yes / No</button>
+        <button data-shared-add="rating">+ Rating 1–5</button>
+        <button data-shared-add="postcode">+ Postcode</button>
+        <button data-shared-add="phone">+ Phone</button>
+      </div>
+    </div>
+    <aside class="survey-preview">
+      <h3>Preview</h3>
+      <div id="sharedSurveyPreview"></div>
+    </aside>
+  </div>
+</section>
+<section id="surveyEditorResults" class="survey-panel">
+  <div id="sharedSurveyResults"></div>
+</section>
+</div></main></div><script src="assets/js/app.js?v=20260826-0855"></script></body></html>

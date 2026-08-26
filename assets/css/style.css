@@ -650,3 +650,18 @@ table{width:100%;border-collapse:collapse;min-width:850px}th,td{text-align:left;
 .library-toolbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap}
 .library-card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
 .assignment-note{font-size:11px;color:var(--muted);margin-top:6px}
+
+/* Survey library */
+.survey-library-page{padding-bottom:40px}
+.survey-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.survey-card{background:#fff;border:1px solid var(--line);padding:22px;min-height:270px;display:flex;flex-direction:column}
+.survey-card.create-card{border-style:dashed;text-align:center;align-items:center;justify-content:center}
+.survey-card h3{font-size:28px;margin:14px 0 6px}
+.survey-card p{color:var(--muted);margin:0}
+.survey-card .library-card-actions{margin-top:auto;padding-top:18px}
+.survey-card-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+.survey-card-menu{margin-left:auto;border:0;background:transparent;font-size:24px;line-height:1;color:#77869a}
+.survey-card-top{display:flex;align-items:flex-start}
+.survey-editor-layout{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:18px}
+@media(max-width:980px){.survey-card-grid{grid-template-columns:1fr 1fr}.survey-editor-layout{grid-template-columns:1fr}}
+@media(max-width:650px){.survey-card-grid{grid-template-columns:1fr}}
