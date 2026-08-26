@@ -59,7 +59,7 @@
 
   async function save(patch){
     Object.assign(campaign,patch);saving();clearTimeout(saveTimer);await new Promise(resolve=>saveTimer=setTimeout(resolve,180));
-    const r=await sb.from('campaigns').update({name:campaign.name,headline:campaign.headline,supporting_copy:campaign.supporting_copy,image_path:campaign.image_path,key_points:campaign.key_points,survey_id:campaign.survey_id,settings:campaign.settings,branding:campaign.branding,status:campaign.status,domain:campaign.domain}).eq('id',campaign.id);
+    const r=await sb.from('campaigns').update({name:campaign.name,headline:campaign.headline,supporting_copy:campaign.supporting_copy,image_path:campaign.image_path,key_points:campaign.key_points,survey_id:campaign.survey_id,settings:campaign.settings,branding:campaign.branding,status:campaign.status,domain:campaign.domain,has_unpublished_changes:true}).eq('id',campaign.id);
     if(r.error){fail('Could not save: '+r.error.message);return}
     imageUrl=await signed(campaign.image_path);saved();render()
   }
@@ -94,6 +94,6 @@
   document.querySelectorAll('[data-width]').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('[data-width]').forEach(x=>x.classList.remove('active'));btn.classList.add('active');device.className='campaign-device '+btn.dataset.width});
   cmBrandButton.onclick=()=>openPanel('brand');
   cmPreviewButton.onclick=()=>{const w=window.open('','_blank');if(!w)return;w.document.open();w.document.write(previewHTML());w.document.close()};
-  cmPublishButton.onclick=async()=>{saving();const aid=await accountId();const vr=await sb.from('publish_versions').insert({account_id:aid,entity_type:'campaign',entity_id:campaign.id,label:'Published version',snapshot:campaign});if(vr.error){fail('Could not publish: '+vr.error.message);return}await save({status:'published'});cmPublishButton.textContent='Published'};
+  cmPublishButton.onclick=async()=>{saving();const aid=await accountId();const vr=await sb.from('publish_versions').insert({account_id:aid,entity_type:'campaign',entity_id:campaign.id,label:'Published version',snapshot:campaign});if(vr.error){fail('Could not publish: '+vr.error.message);return}const pub=await sb.from('campaigns').update({status:'published',published_at:new Date().toISOString(),has_unpublished_changes:false}).eq('id',campaign.id);if(pub.error){fail('Could not publish: '+pub.error.message);return}campaign.status='published';campaign.has_unpublished_changes=false;saved();cmPublishButton.textContent='Published'};
   if(await load())render()
 })();
