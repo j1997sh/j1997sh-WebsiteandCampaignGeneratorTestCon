@@ -137,7 +137,7 @@
     };
 
     (websitesR.data||[]).forEach(w=>local.websites[w.id]={
-      id:w.id,name:w.name,area:w.area||'',type:w.site_type||'councillor_lite',
+      id:w.id,name:w.name,area:w.area||'',type:w.site_type||'campaign_site',
       status:capStatus(w.status),domain:w.domain||'',slug:w.slug||'',
       surveyId:w.selected_survey_id||null,branding:w.branding||{},
       content:w.content||{},heroImagePath:w.hero_image_path||null,aboutImagePath:w.about_image_path||null,updatedAt:w.updated_at
@@ -291,7 +291,7 @@
     const aid=await accountId();
     const id=crypto.randomUUID();
     const payload={
-      id,account_id:aid,name,area:area||null,site_type:'councillor_lite',status:'draft',
+      id,account_id:aid,name,area:area||null,site_type:'campaign_site',status:'draft',
       domain:null,slug:String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''),
       selected_survey_id:surveyId||null,
       branding:{primary:'#08254a',secondary:'#1476d4',text:'#ffffff'},
@@ -410,7 +410,7 @@
   async function syncWebsite(w){
     const aid=await accountId();
     const payload={
-      id:w.id,account_id:aid,name:w.name,area:w.area||null,site_type:w.type||'councillor_lite',
+      id:w.id,account_id:aid,name:w.name,area:w.area||null,site_type:w.type||'campaign_site',
       status:dbStatus(w.status),domain:w.domain||null,slug:w.slug||null,
       selected_survey_id:w.surveyId||null,branding:w.branding||{},content:w.content||{},
       hero_image_path:w.heroImagePath||null,about_image_path:w.aboutImagePath||null
@@ -493,7 +493,7 @@
     };
     CP.createWebsite=(name,area='')=>{
       const d=CP.db(),item={
-        id:crypto.randomUUID(),name,area,type:'councillor_lite',status:'Draft',domain:'',slug:'',
+        id:crypto.randomUUID(),name,area,type:'campaign_site',status:'Draft',domain:'',slug:'',
         surveyId:null,branding:{primary:'#08254a',secondary:'#1476d4',text:'#ffffff'},content:{},
         updatedAt:new Date().toISOString()
       };
@@ -614,7 +614,7 @@
       </div>`;
 
     document.getElementById('profileAddTag').onclick=async()=>{
-      const tag=prompt('Add tag');if(!tag)return;
+      const tag=await CPDialog.ask({title:'Add tag',label:'Tag name',placeholder:'e.g. Volunteer'});if(!tag)return;
       try{await window.CPStage2.addPersonTag(id,tag);sessionStorage.clear();location.reload()}catch(e){showBackendError('Could not add tag: '+e.message)}
     };
     root.querySelectorAll('[data-remove-profile-tag]').forEach(b=>b.onclick=async()=>{
@@ -922,15 +922,29 @@
     }
     function bindRows(){
       table.querySelectorAll('.real-person-select').forEach(x=>x.onchange=()=>{x.checked?selected.add(x.dataset.id):selected.delete(x.dataset.id);document.getElementById('realPeopleSelected').textContent=selected.size});
-      table.querySelectorAll('.add-person-tag').forEach(b=>b.onclick=async()=>{const tag=prompt('Add tag');if(!tag)return;try{await window.CPStage2.addPersonTag(b.dataset.person,tag);sessionStorage.removeItem(bootKey);location.reload()}catch(e){showBackendError('Could not add tag: '+e.message)}});
+      table.querySelectorAll('.add-person-tag').forEach(b=>b.onclick=async()=>{const tag=await CPDialog.ask({title:'Add tag',label:'Tag name',placeholder:'e.g. Volunteer'});if(!tag)return;try{await window.CPStage2.addPersonTag(b.dataset.person,tag);sessionStorage.removeItem(bootKey);location.reload()}catch(e){showBackendError('Could not add tag: '+e.message)}});
       table.querySelectorAll('[data-remove-tag]').forEach(b=>b.onclick=async()=>{try{await window.CPStage2.removePersonTag(b.dataset.person,b.dataset.removeTag);sessionStorage.removeItem(bootKey);location.reload()}catch(e){showBackendError('Could not remove tag: '+e.message)}});
     }
     document.getElementById('realSelectAll').onchange=e=>{selected=new Set(e.target.checked?filtered.map(p=>p.id):[]);renderRows();document.getElementById('realPeopleSelected').textContent=selected.size};
-    document.getElementById('realPeopleBulkTag').onclick=async()=>{if(!selected.size)return;const tag=prompt(`Add tag to ${selected.size} people`);if(!tag)return;for(const id of selected)await window.CPStage2.addPersonTag(id,tag);sessionStorage.removeItem(bootKey);location.reload()};
+    document.getElementById('realPeopleBulkTag').onclick=async()=>{if(!selected.size)return;const tag=await CPDialog.ask({title:`Tag ${selected.size} supporters`,label:'Tag name',placeholder:'e.g. Follow up'});if(!tag)return;for(const id of selected)await window.CPStage2.addPersonTag(id,tag);sessionStorage.removeItem(bootKey);location.reload()};
     [['realPeopleSearch','search','input'],['realPeopleTag','tag','change'],['realPeopleSource','source','change'],['realPeopleVoting','voting','change'],['realPeopleAction','action','change'],['realPeopleConsent','consent','change']].forEach(([id,k,evt])=>document.getElementById(id).addEventListener(evt,e=>{state[k]=e.target.value;filter()}));
     document.getElementById('realPeopleClear').onclick=()=>{state={search:'',tag:'',source:'',voting:'',consent:'',action:''};filterHost.querySelectorAll('input,select').forEach(x=>x.value='');filter()};
     document.getElementById('peopleExportReal').onclick=()=>{const rows=[['Name','Email','Postcode','Tags','Voting intention','Source','Email consent'],...filtered.map(p=>[p.name,p.email,p.postcode,(p.tags||[]).map(t=>t.name).join('|'),p.votingIntention,p.source,p.consentEmail===true?'Yes':'No'])];const csv=rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='supporters.csv';a.click()};
     const qp=new URLSearchParams(location.search);if(qp.get('source'))state.source=qp.get('source');if(qp.get('voting'))state.voting=qp.get('voting');if(qp.get('tag'))state.tag=qp.get('tag');filter();
+  }
+
+
+  function applyClientFacingPolish(){
+    document.querySelectorAll('.sidebar-site small').forEach(el=>{
+      el.textContent=(el.textContent||'').replace(/\s*·\s*(Campaign website|campaign_site|Councillor Lite)\s*/gi,'').trim()
+    });
+    document.querySelectorAll('.site-card .muted').forEach(el=>{
+      el.textContent=(el.textContent||'').replace(/\s*·\s*(Campaign website|campaign_site|Councillor Lite)\s*/gi,'').trim()
+    });
+    document.querySelectorAll('.editor-scope-note').forEach(note=>{
+      const last=note.querySelector('.autosave-standard span:last-child');if(last&&/Supabase/i.test(last.textContent))last.textContent='Saved'
+    });
+    document.querySelectorAll('[data-prototype],[data-demo]').forEach(el=>el.remove())
   }
 
   // -------------------------------------------------------
@@ -945,6 +959,7 @@
       bindTransactionalCreates();
       renderStage2People();
       renderStage2CampaignMicrositeEditor();
+      applyClientFacingPolish();
       renderStage2Person();
       enhanceStage2SurveyOverview();
       enhanceStage2SurveyEditorResults();

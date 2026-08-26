@@ -14,7 +14,7 @@ window.CP = window.CP || (() => {
         id:'site-joe-bloggs',
         name:'Joe Bloggs',
         area:'Bloggs Ward',
-        type:'Councillor Lite',
+        type:'Campaign website',
         status:'Published',
         domain:'joe-bloggs.example.org',
         surveyId:'survey-residents',
@@ -662,7 +662,7 @@ function saveSurveyQuestions(q){localStorage.setItem('cpSurvey:'+cpCurrentSiteId
     const n=document.querySelectorAll('.row-select:checked').length,bar=document.getElementById('bulkBar');document.getElementById('selectedCount').textContent=n;bar.classList.toggle('show',n>0)
   }
   document.getElementById('bulkClear').onclick=()=>{document.querySelectorAll('.row-select').forEach(c=>c.checked=false);bulkUpdate()};
-  document.getElementById('bulkTag').onclick=()=>alert('Prototype: selected supporters tagged.');
+  document.getElementById('bulkTag').onclick=()=>alert(' selected supporters tagged.');
   document.querySelectorAll('.table-sort').forEach(h=>h.onclick=()=>{const k=h.dataset.sort;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1}sort();render()});
   [['peopleSearch','search'],['filterIssue','issue'],['filterArea','area'],['filterVoting','voting'],['filterVolunteer','volunteer'],['filterSource','source']].forEach(([id,k])=>document.getElementById(id).addEventListener(id==='peopleSearch'?'input':'change',e=>{state[k]=e.target.value;filter()}));
   document.getElementById('clearPeopleFilters').onclick=()=>{Object.keys(state).forEach(k=>state[k]='');syncControls();filter()};
@@ -793,7 +793,7 @@ function saveSurveyQuestions(q){localStorage.setItem('cpSurvey:'+cpCurrentSiteId
   document.getElementById('creativeDrawerClose').onclick=()=>workspace.classList.remove('drawer-open');
   document.getElementById('creativeFormat').onchange=e=>{canvas.className='creative-canvas '+e.target.value};
   document.getElementById('creativeReset').onclick=()=>{state.primary='#08254a';state.background='#08254a';state.fade='#08254a';state.text='#ffffff';render()};
-  document.getElementById('creativeExport').onclick=()=>alert('Prototype: export the current graphic as PNG.');
+  document.getElementById('creativeExport').onclick=()=>alert(' export the current graphic as PNG.');
   render();
 })();
 
@@ -1526,7 +1526,7 @@ CP.softDelete=function(type,id){
 };
 CP.createWebsite=function(name,area=''){
   const d=CP.db(),id=CP.uid('site');
-  const item={id,name,area,type:'Councillor Lite',status:'Draft',domain:'',surveyId:null,branding:{primary:'#08254a',secondary:'#1476d4',text:'#ffffff'},updatedAt:new Date().toISOString()};
+  const item={id,name,area,type:'Campaign website',status:'Draft',domain:'',surveyId:null,branding:{primary:'#08254a',secondary:'#1476d4',text:'#ffffff'},updatedAt:new Date().toISOString()};
   d.websites[id]=item;d.activeWebsiteId=id;CP.save(d);return item
 };
 CP.switchWebsite=function(id){CP.setActiveWebsite(id);localStorage.setItem('cpCurrentSiteShared',id)};
@@ -1648,3 +1648,40 @@ document.addEventListener('error',e=>{
   const root=document.getElementById('peopleSharedEmpty');if(!root)return;
   if(!Object.keys(CP.db().people||{}).length)root.innerHTML='<div class="empty-state-card"><h3>No supporters yet</h3><p>Publish a website, campaign or survey and new supporter activity will appear here.</p><a class="btn" href="websites.html">Open websites</a></div>'
 })();
+
+
+/* Client-facing dialog */
+window.CPDialog = {
+  ask({title='Enter details',label='Value',value='',placeholder='',confirm='Save'}={}){
+    return new Promise(resolve=>{
+      document.getElementById('cpDialogBackdrop')?.remove();
+      const back=document.createElement('div');back.id='cpDialogBackdrop';back.className='cp-dialog-backdrop';
+      back.innerHTML=`<div class="cp-dialog" role="dialog" aria-modal="true"><div class="cp-dialog-head"><h3>${title}</h3><button type="button" class="cp-dialog-x" aria-label="Close">×</button></div><label class="field"><span>${label}</span><input id="cpDialogInput" value="${String(value).replace(/"/g,'&quot;')}" placeholder="${String(placeholder).replace(/"/g,'&quot;')}"></label><div class="cp-dialog-actions"><button class="btn secondary" id="cpDialogCancel">Cancel</button><button class="btn" id="cpDialogConfirm">${confirm}</button></div></div>`;
+      document.body.appendChild(back);
+      const input=back.querySelector('#cpDialogInput');input.focus();input.select();
+      const done=v=>{back.remove();resolve(v)};
+      back.querySelector('.cp-dialog-x').onclick=()=>done(null);
+      back.querySelector('#cpDialogCancel').onclick=()=>done(null);
+      back.querySelector('#cpDialogConfirm').onclick=()=>done(input.value.trim()||null);
+      input.addEventListener('keydown',e=>{if(e.key==='Enter')done(input.value.trim()||null);if(e.key==='Escape')done(null)});
+      back.addEventListener('click',e=>{if(e.target===back)done(null)})
+    })
+  },
+  confirm({title='Are you sure?',message='',confirm='Continue'}={}){
+    return new Promise(resolve=>{
+      document.getElementById('cpDialogBackdrop')?.remove();
+      const back=document.createElement('div');back.id='cpDialogBackdrop';back.className='cp-dialog-backdrop';
+      back.innerHTML=`<div class="cp-dialog" role="dialog" aria-modal="true"><div class="cp-dialog-head"><h3>${title}</h3><button type="button" class="cp-dialog-x">×</button></div><p class="cp-dialog-message">${message}</p><div class="cp-dialog-actions"><button class="btn secondary" id="cpDialogCancel">Cancel</button><button class="btn" id="cpDialogConfirm">${confirm}</button></div></div>`;
+      document.body.appendChild(back);
+      const done=v=>{back.remove();resolve(v)};
+      back.querySelector('.cp-dialog-x').onclick=()=>done(false);back.querySelector('#cpDialogCancel').onclick=()=>done(false);back.querySelector('#cpDialogConfirm').onclick=()=>done(true)
+    })
+  }
+};
+
+if(window.CP_STAGE2){
+  window.prompt = function(label, value){
+    console.warn('Legacy prompt prevented:', label);
+    return null;
+  };
+}
