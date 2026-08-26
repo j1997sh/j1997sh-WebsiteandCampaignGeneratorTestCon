@@ -99,7 +99,7 @@
 
     const [
       websitesR,surveysR,questionsR,campaignsR,graphicsR,peopleR,actionsR,
-      integrationsR,versionsR
+      integrationsR,versionsR,tagsR,personTagsR
     ]=await Promise.all([
       sb.from('websites').select('*').order('created_at'),
       sb.from('surveys').select('*').order('created_at'),
@@ -109,9 +109,11 @@
       sb.from('people').select('*').order('created_at'),
       sb.from('supporter_actions').select('*').order('created_at',{ascending:false}),
       sb.from('integrations').select('*').order('created_at'),
-      sb.from('publish_versions').select('*').order('created_at',{ascending:false})
+      sb.from('publish_versions').select('*').order('created_at',{ascending:false}),
+      sb.from('tags').select('*').order('name'),
+      sb.from('person_tags').select('*')
     ]);
-    const responses=[websitesR,surveysR,questionsR,campaignsR,graphicsR,peopleR,actionsR,integrationsR,versionsR];
+    const responses=[websitesR,surveysR,questionsR,campaignsR,graphicsR,peopleR,actionsR,integrationsR,versionsR,tagsR,personTagsR];
     const err=responses.find(r=>r.error)?.error;
     if(err) throw err;
 
@@ -137,7 +139,7 @@
       id:w.id,name:w.name,area:w.area||'',type:w.site_type||'councillor_lite',
       status:capStatus(w.status),domain:w.domain||'',slug:w.slug||'',
       surveyId:w.selected_survey_id||null,branding:w.branding||{},
-      content:w.content||{},updatedAt:w.updated_at
+      content:w.content||{},heroImagePath:w.hero_image_path||null,aboutImagePath:w.about_image_path||null,updatedAt:w.updated_at
     });
 
     (surveysR.data||[]).forEach(s=>local.surveys[s.id]={
@@ -149,7 +151,7 @@
     (campaignsR.data||[]).forEach(c=>local.campaigns[c.id]={
       id:c.id,websiteId:c.website_id,surveyId:c.survey_id||null,name:c.name,slug:c.slug||'',
       status:capStatus(c.status),headline:c.headline||c.name,support:c.supporting_copy||'',
-      imagePath:c.image_path||null,points:c.key_points||[],settings:c.settings||{},
+      imagePath:c.image_path||null,previewPath:c.preview_path||null,points:c.key_points||[],settings:c.settings||{},
       supporterCount:c.supporter_count||0,updatedAt:c.updated_at
     });
 
@@ -159,11 +161,15 @@
       ...g.state,previewPath:g.preview_path||null,savedAt:g.updated_at
     });
 
+    const tagById=Object.fromEntries((tagsR.data||[]).map(t=>[t.id,t]));
+    const tagsByPerson={};
+    (personTagsR.data||[]).forEach(pt=>{const t=tagById[pt.tag_id];if(t)(tagsByPerson[pt.person_id] ||= []).push(t)});
     (peopleR.data||[]).forEach(p=>local.people[p.id]={
       id:p.id,name:[p.first_name,p.last_name].filter(Boolean).join(' ')||p.email||'Supporter',
       firstName:p.first_name||'',lastName:p.last_name||'',email:p.email||'',postcode:p.postcode||'',
       phone:p.phone||'',source:p.source||'',votingIntention:p.voting_intention||'',
-      notes:p.notes||'',external:p.external_ids||{},consentEmail:p.consent_email
+      notes:p.notes||'',external:p.external_ids||{},consentEmail:p.consent_email,
+      tags:tagsByPerson[p.id]||[]
     });
 
     local.actions=(actionsR.data||[]).map(a=>({
@@ -245,6 +251,32 @@
     },true);
   }
 
+
+  window.CPStage2 = window.CPStage2 || {};
+  window.CPStage2.addPersonTag=async(personId,tagName)=>{
+    const {error}=await sb.rpc('add_person_tag',{p_person_id:personId,p_tag:tagName});
+    if(error)throw error;
+  };
+  window.CPStage2.removePersonTag=async(personId,tagId)=>{
+    const {error}=await sb.rpc('remove_person_tag',{p_person_id:personId,p_tag_id:tagId});
+    if(error)throw error;
+  };
+  window.CPStage2.uploadAsset=async(file,folder)=>{
+    const d=CP.db(),account=d.account?.id;
+    if(!account)throw new Error('Account unavailable');
+    const ext=(file.name.split('.').pop()||'bin').toLowerCase();
+    const safe=(file.name.replace(/\.[^.]+$/,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')||'asset');
+    const path=`${account}/${folder}/${Date.now()}-${safe}.${ext}`;
+    const {error}=await sb.storage.from('campaign-assets').upload(path,file,{upsert:false,contentType:file.type||undefined});
+    if(error)throw error;
+    return path;
+  };
+  window.CPStage2.signedAssetUrl=async(path,seconds=3600)=>{
+    if(!path)return null;
+    const {data,error}=await sb.storage.from('campaign-assets').createSignedUrl(path,seconds);
+    if(error)throw error;return data.signedUrl;
+  };
+
   // -------------------------------------------------------
   // Sync helpers
   // -------------------------------------------------------
@@ -265,7 +297,8 @@
     const payload={
       id:w.id,account_id:aid,name:w.name,area:w.area||null,site_type:w.type||'councillor_lite',
       status:dbStatus(w.status),domain:w.domain||null,slug:w.slug||null,
-      selected_survey_id:w.surveyId||null,branding:w.branding||{},content:w.content||{}
+      selected_survey_id:w.surveyId||null,branding:w.branding||{},content:w.content||{},
+      hero_image_path:w.heroImagePath||null,about_image_path:w.aboutImagePath||null
     };
     const r=await sb.from('websites').upsert(payload);
     if(r.error) throw r.error;
@@ -275,7 +308,7 @@
     const r=await sb.from('campaigns').upsert({
       id:c.id,account_id:aid,website_id:c.websiteId,survey_id:c.surveyId||null,
       name:c.name,slug:c.slug||null,status:dbStatus(c.status),headline:c.headline||c.name,
-      supporting_copy:c.support||'',image_path:c.imagePath||null,key_points:c.points||[],
+      supporting_copy:c.support||'',image_path:c.imagePath||null,preview_path:c.previewPath||null,key_points:c.points||[],
       settings:c.settings||{},supporter_count:c.supporterCount||0
     }); if(r.error) throw r.error;
   }
@@ -404,6 +437,76 @@
     if(current)a.href='public-site.html?site='+encodeURIComponent(current)
   });
 
+
+  function renderStage2People(){
+    if(pathname!=='people.html')return;
+    const table=document.querySelector('.table-card table'),filterHost=document.getElementById('stage2PeopleFilters');
+    if(!table||!filterHost)return;
+    const d=CP.db(),all=Object.values(d.people||{});
+    let state={search:'',tag:'',source:'',voting:'',consent:'',action:''},selected=new Set(),filtered=[...all];
+
+    const actionsByPerson={};
+    (d.actions||[]).forEach(a=>(actionsByPerson[a.personId] ||= []).push(a));
+    const tagNames=[...new Set(all.flatMap(p=>(p.tags||[]).map(t=>t.name)))].sort();
+    const sources=[...new Set(all.map(p=>p.source).filter(Boolean))].sort();
+    const votings=[...new Set(all.map(p=>p.votingIntention).filter(Boolean))].sort();
+    const actionTypes=[...new Set((d.actions||[]).map(a=>a.type).filter(Boolean))].sort();
+
+    filterHost.innerHTML=`<div class="filter-toolbar">
+      <input id="realPeopleSearch" placeholder="Search name, email or postcode">
+      <select id="realPeopleTag"><option value="">All tags</option>${tagNames.map(x=>`<option>${x}</option>`).join('')}</select>
+      <select id="realPeopleSource"><option value="">All sources</option>${sources.map(x=>`<option>${x}</option>`).join('')}</select>
+      <select id="realPeopleVoting"><option value="">All voting intentions</option>${votings.map(x=>`<option>${x}</option>`).join('')}</select>
+      <select id="realPeopleAction"><option value="">All actions</option>${actionTypes.map(x=>`<option>${x}</option>`).join('')}</select>
+      <select id="realPeopleConsent"><option value="">All email consent</option><option value="yes">Opted in</option><option value="no">Not opted in</option></select>
+      <button class="btn secondary small" id="realPeopleClear">Clear</button>
+    </div>
+    <div class="bulk-bar" id="realPeopleBulk"><span><strong id="realPeopleSelected">0</strong> selected</span><button class="btn secondary small" id="realPeopleBulkTag">Add tag</button></div>`;
+
+    table.querySelector('thead').innerHTML='<tr><th><input id="realSelectAll" type="checkbox"></th><th>Supporter</th><th>Postcode</th><th>Tags</th><th>Voting intention</th><th>Recent actions</th><th>Source</th><th>Email</th></tr>';
+
+    const esc2=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    function filter(){
+      filtered=all.filter(p=>{
+        const hay=[p.name,p.email,p.postcode].join(' ').toLowerCase();
+        const tags=(p.tags||[]).map(t=>t.name);
+        const acts=actionsByPerson[p.id]||[];
+        return (!state.search||hay.includes(state.search.toLowerCase()))
+          &&(!state.tag||tags.includes(state.tag))
+          &&(!state.source||p.source===state.source)
+          &&(!state.voting||p.votingIntention===state.voting)
+          &&(!state.action||acts.some(a=>a.type===state.action))
+          &&(!state.consent||(state.consent==='yes'?p.consentEmail===true:p.consentEmail!==true));
+      });renderRows()
+    }
+    function renderRows(){
+      document.getElementById('peopleRealCount').textContent=`${filtered.length} supporter${filtered.length===1?'':'s'} in this view · ${all.length} total`;
+      const tb=table.querySelector('tbody');
+      tb.innerHTML=filtered.length?filtered.map(p=>{
+        const acts=(actionsByPerson[p.id]||[]).slice(0,2);
+        return `<tr><td><input class="real-person-select" data-id="${p.id}" type="checkbox" ${selected.has(p.id)?'checked':''}></td>
+          <td><a href="person.html?id=${p.id}"><span class="person-name">${esc2(p.name)}</span><span class="person-email">${esc2(p.email||'No email')}</span></a></td>
+          <td>${esc2(p.postcode||'—')}</td>
+          <td><div class="person-tag-stack">${(p.tags||[]).map(t=>`<span class="person-tag">${esc2(t.name)} <button data-remove-tag="${t.id}" data-person="${p.id}">×</button></span>`).join('')||'<span class="muted">No tags</span>'}</div><button class="text-button add-person-tag" data-person="${p.id}">+ tag</button></td>
+          <td>${esc2(p.votingIntention||'Not asked')}</td>
+          <td>${acts.map(a=>`<span class="action-mini">${esc2(a.type)}</span>`).join(' ')||'—'}</td>
+          <td>${esc2(p.source||'—')}</td><td>${p.consentEmail===true?'Opted in':'No / unknown'}</td></tr>`
+      }).join(''):'<tr><td colspan="8"><div class="no-results">No supporters match these filters.</div></td></tr>';
+      bindRows()
+    }
+    function bindRows(){
+      table.querySelectorAll('.real-person-select').forEach(x=>x.onchange=()=>{x.checked?selected.add(x.dataset.id):selected.delete(x.dataset.id);document.getElementById('realPeopleSelected').textContent=selected.size});
+      table.querySelectorAll('.add-person-tag').forEach(b=>b.onclick=async()=>{const tag=prompt('Add tag');if(!tag)return;try{await window.CPStage2.addPersonTag(b.dataset.person,tag);sessionStorage.removeItem(bootKey);location.reload()}catch(e){showBackendError('Could not add tag: '+e.message)}});
+      table.querySelectorAll('[data-remove-tag]').forEach(b=>b.onclick=async()=>{try{await window.CPStage2.removePersonTag(b.dataset.person,b.dataset.removeTag);sessionStorage.removeItem(bootKey);location.reload()}catch(e){showBackendError('Could not remove tag: '+e.message)}});
+    }
+    document.getElementById('realSelectAll').onchange=e=>{selected=new Set(e.target.checked?filtered.map(p=>p.id):[]);renderRows();document.getElementById('realPeopleSelected').textContent=selected.size};
+    document.getElementById('realPeopleBulkTag').onclick=async()=>{if(!selected.size)return;const tag=prompt(`Add tag to ${selected.size} people`);if(!tag)return;for(const id of selected)await window.CPStage2.addPersonTag(id,tag);sessionStorage.removeItem(bootKey);location.reload()};
+    [['realPeopleSearch','search','input'],['realPeopleTag','tag','change'],['realPeopleSource','source','change'],['realPeopleVoting','voting','change'],['realPeopleAction','action','change'],['realPeopleConsent','consent','change']].forEach(([id,k,evt])=>document.getElementById(id).addEventListener(evt,e=>{state[k]=e.target.value;filter()}));
+    document.getElementById('realPeopleClear').onclick=()=>{state={search:'',tag:'',source:'',voting:'',consent:'',action:''};filterHost.querySelectorAll('input,select').forEach(x=>x.value='');filter()};
+    document.getElementById('peopleExportReal').onclick=()=>{const rows=[['Name','Email','Postcode','Tags','Voting intention','Source','Email consent'],...filtered.map(p=>[p.name,p.email,p.postcode,(p.tags||[]).map(t=>t.name).join('|'),p.votingIntention,p.source,p.consentEmail===true?'Yes':'No'])];const csv=rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='supporters.csv';a.click()};
+    const qp=new URLSearchParams(location.search);if(qp.get('source'))state.source=qp.get('source');if(qp.get('voting'))state.voting=qp.get('voting');if(qp.get('tag'))state.tag=qp.get('tag');filter();
+  }
+
   // -------------------------------------------------------
   // Boot
   // -------------------------------------------------------
@@ -413,6 +516,7 @@
     hydrate().then(session=>{
       if(!session)return;
       installCPBridge();
+      renderStage2People();
       if(!sessionStorage.getItem(bootKey)){
         sessionStorage.setItem(bootKey,'1');
         location.reload(); return;

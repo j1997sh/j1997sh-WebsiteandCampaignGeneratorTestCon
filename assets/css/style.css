@@ -758,3 +758,7 @@ table{width:100%;border-collapse:collapse;min-width:850px}th,td{text-align:left;
 .cp-stage2-boot-card small{color:#718198}
 .cp-stage2-spinner{width:28px;height:28px;border:3px solid #dbe6f0;border-top-color:#1476d4;border-radius:50%;margin:0 auto 8px;animation:cp-spin .7s linear infinite}
 @keyframes cp-spin{to{transform:rotate(360deg)}}
+
+.editor-scope-note{display:flex;align-items:center;gap:12px;padding:9px 12px;background:#edf6ff;border:1px solid #cde3f8;margin-bottom:12px;font-size:11px}
+.editor-scope-note>span:nth-child(2){color:#617289}.editor-scope-note .autosave-standard{margin-left:auto}
+.person-tag-stack{display:flex;gap:4px;flex-wrap:wrap;max-width:300px}.person-tag{display:inline-flex;align-items:center;gap:4px;background:#edf3f8;border:1px solid #d5e0ea;padding:3px 6px;font-size:10px;font-weight:800}.person-tag button{border:0;background:transparent;padding:0;cursor:pointer}.action-mini{display:inline-block;background:#f3f6f9;border:1px solid #e1e7ed;padding:3px 5px;font-size:10px}.submit-message{padding:10px 12px;font-weight:800}.submit-message.success{background:#eaf8ef;color:#16663a}.submit-message.error{background:#fdecea;color:#8a281f}

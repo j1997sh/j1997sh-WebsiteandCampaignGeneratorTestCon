@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>People | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-stage2-1"></head>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>People | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-stage2-people-editors"></head>
 <body class="app-body"><div class="app-shell"><aside class="app-sidebar">
       <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Client dashboard</small></span></div>
       <div class="workspace-select">
@@ -18,8 +18,9 @@
           </div>
           <a class="btn secondary small" href="public-site.html">View public site</a>
         </div></header><div class="app-content">
-<div class="mobile-admin-note">Search and supporter profiles are designed to work on mobile.</div><div id="peopleSharedEmpty"></div><div class="page-intro"><div><h2>People</h2><p>428 supporters in your campaign database.</p></div><button class="btn small">Export CSV</button></div>
-<div class="filters"><input placeholder="Search name, email or postcode"><select><option>All issues</option><option>Roads</option><option>Crime</option><option>Local services</option></select><select><option>All voting intentions</option><option>Conservative</option><option>Labour</option><option>Liberal Democrat</option><option>Reform UK</option><option>Green</option><option>Other</option><option>Undecided</option><option>Prefer not to say</option></select><select><option>All volunteer types</option><option>Leaflets</option><option>Doorstep</option><option>Poster</option></select><select><option>All sources</option><option>Facebook</option><option>Organic</option><option>Email</option></select></div>
+<div class="mobile-admin-note">Search, filter, tag and manage real supporter records from Supabase.</div>
+<div class="page-intro"><div><h2>People</h2><p id="peopleRealCount">Loading supporters…</p></div><button class="btn small" id="peopleExportReal">Export CSV</button></div>
+<div id="stage2PeopleFilters"></div>
 <div class="table-card"><table><thead><tr><th>Supporter</th><th>Postcode</th><th>Voting intention</th><th>Issues / actions</th><th>Volunteer</th><th>Source</th><th>Email</th></tr></thead><tbody>
 <tr><td><a href="person.html"><span class="person-name">Sarah Smith</span><span class="person-email">sarah.smith@example.org</span></a></td><td>BG3 4XX</td><td><span class="intent-pill">Liberal Democrat</span></td><td>Roads · Bus campaign</td><td>Leaflets</td><td>Facebook</td><td><span class="tag green">Opted in</span></td></tr>
 <tr><td><span class="person-name">Tom Williams</span><span class="person-email">tom.w@example.org</span></td><td>BG1 2AB</td><td><span class="intent-pill undecided">Undecided</span></td><td>Crime · Survey</td><td>—</td><td>Organic</td><td><span class="tag green">Opted in</span></td></tr>
@@ -28,4 +29,4 @@
 <tr><td><span class="person-name">Emily Clarke</span><span class="person-email">emily.c@example.org</span></td><td>BG5 1QT</td><td><span class="intent-pill">Conservative</span></td><td>Parking · Survey</td><td>—</td><td>Facebook</td><td><span class="tag green">Opted in</span></td></tr>
 <tr><td><span class="person-name">Michael Green</span><span class="person-email">m.green@example.org</span></td><td>BG3 9DA</td><td><span class="intent-pill">Reform UK</span></td><td>Bus campaign</td><td>Online</td><td>Organic</td><td><span class="tag green">Opted in</span></td></tr>
 </tbody></table></div>
-</div></main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=20260826-stage2-1"></script><script src="assets/js/app.js?v=20260826-stage2-1"></script><script src="assets/js/supabase-backend.js?v=20260826-stage2-1"></script></body></html>
+</div></main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=20260826-stage2-people-editors"></script><script src="assets/js/app.js?v=20260826-stage2-people-editors"></script><script src="assets/js/supabase-backend.js?v=20260826-stage2-people-editors"></script></body></html>

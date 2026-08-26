@@ -63,8 +63,58 @@
     <section class="pub-hero"><div class="pub-container"><div><h1>${esc(hero)}</h1><p>${esc(heroCopy)}</p>${survey?'<a class="pub-btn" href="#survey">Tell us what matters</a>':''}</div></div></section>
     <section class="pub-section" id="about"><div class="pub-container"><h2>${esc(aboutHeadline)}</h2><p class="pub-lead">${esc(aboutLead)}</p>${flat?.aboutCopy?`<p>${esc(flat.aboutCopy)}</p>`:''}</div></section>
     <section class="pub-section alt" id="priorities"><div class="pub-container"><h2>${esc(first)}’s priorities</h2><div class="pub-grid">${priorities.map(p=>`<article><h3>${esc(p.title)}</h3><p>${esc(p.copy||'')}</p></article>`).join('')}</div></div></section>
-    ${survey?`<section class="pub-section" id="survey"><div class="pub-container"><h2>${esc(survey.name)}</h2><p class="pub-lead">Tell ${esc(first)} what matters most locally.</p><form class="pub-form"><div class="two"><input name="first_name" placeholder="First name"><input name="last_name" placeholder="Last name"><input class="full" name="email" type="email" placeholder="Email address"><input class="full" name="postcode" placeholder="Postcode"></div>${questions.filter(q=>q.enabled).map(question).join('')}<button class="pub-btn" type="button">Send my views</button><p class="form-note">Submissions will be connected to Supabase in the next backend step.</p></form></div></section>`:''}
-    ${currentCampaign?`<section class="pub-section alt" id="campaign"><div class="pub-container"><h2>${esc(campaignTitle)}</h2><p class="pub-lead">${esc(campaignCopy)}</p><a class="pub-btn" href="#">Back the campaign</a></div></section>`:''}
+    ${survey?`<section class="pub-section" id="survey"><div class="pub-container"><h2>${esc(survey.name)}</h2><p class="pub-lead">Tell ${esc(first)} what matters most locally.</p><form class="pub-form"><div class="two"><input name="first_name" placeholder="First name"><input name="last_name" placeholder="Last name"><input class="full" name="email" type="email" placeholder="Email address"><input class="full" name="postcode" placeholder="Postcode"></div>${questions.filter(q=>q.enabled).map(question).join('')}<button class="pub-btn" type="submit">Send my views</button><p class="form-note">Your information will be stored securely by the campaign.</p></form></div></section>`:''}
+    ${currentCampaign?`<section class="pub-section alt" id="campaign"><div class="pub-container"><h2>${esc(campaignTitle)}</h2><p class="pub-lead">${esc(campaignCopy)}</p><form class="pub-action-form" data-action="campaign_back"><div class="two"><input name="first_name" placeholder="First name"><input name="last_name" placeholder="Last name"><input class="full" name="email" type="email" placeholder="Email address"><input class="full" name="postcode" placeholder="Postcode"></div><button class="pub-btn" type="submit">Back the campaign</button></form></div></section>`:''}
+    ${(flat?.volunteerHeadline||c.volunteer?.enabled)?`<section class="pub-section" id="volunteer"><div class="pub-container"><h2>${esc(flat?.volunteerHeadline||'Help locally')}</h2><p class="pub-lead">There are lots of ways to help the campaign locally.</p><form class="pub-action-form" data-action="volunteer"><div class="two"><input name="first_name" placeholder="First name"><input name="last_name" placeholder="Last name"><input class="full" name="email" type="email" placeholder="Email address"><input class="full" name="postcode" placeholder="Postcode"></div><select name="volunteer_type"><option value="">How would you like to help?</option><option>Leaflets</option><option>Doorstep</option><option>Poster</option><option>Online</option></select><button class="pub-btn" type="submit">I can help</button></form></div></section>`:''}
   </main>
   <footer class="pub-footer"><div class="pub-container"><strong>${esc(name)}</strong><small>Candidate for ${esc(area)}</small></div></footer>`;
+
+  const form=root.querySelector('.pub-form');
+  if(form){
+    form.addEventListener('submit',async e=>{
+      e.preventDefault();
+      const button=form.querySelector('button[type=submit]');
+      const old=button.textContent;button.disabled=true;button.textContent='Sending…';
+      form.querySelector('.submit-message')?.remove();
+      const fd=new FormData(form),answers={};
+      questions.filter(q=>q.enabled).forEach(q=>{
+        if(q.question_type==='multi') answers[q.id]=fd.getAll(q.id);
+        else answers[q.id]=fd.get(q.id)||'';
+      });
+      const {error}=await sb.rpc('public_submit_survey',{
+        p_website_id:w.id,p_survey_id:survey.id,p_campaign_id:currentCampaign?.id||null,
+        p_first_name:fd.get('first_name')||null,p_last_name:fd.get('last_name')||null,
+        p_email:fd.get('email')||null,p_postcode:fd.get('postcode')||null,p_phone:null,
+        p_source:new URLSearchParams(location.search).get('source')||'website',p_answers:answers
+      });
+      const msg=document.createElement('div');msg.className='submit-message '+(error?'error':'success');
+      msg.textContent=error?'We could not submit your response. Please try again.':'Thank you — your views have been recorded.';
+      form.appendChild(msg);
+      button.disabled=false;button.textContent=old;
+      if(!error)form.reset();
+    })
+  }
+
+
+  root.querySelectorAll('.pub-action-form').forEach(actionForm=>{
+    actionForm.addEventListener('submit',async e=>{
+      e.preventDefault();
+      const button=actionForm.querySelector('button[type=submit]');
+      const old=button.textContent;button.disabled=true;button.textContent='Sending…';
+      actionForm.querySelector('.submit-message')?.remove();
+      const fd=new FormData(actionForm),action=actionForm.dataset.action;
+      const payload={};
+      if(action==='volunteer')payload.volunteer_type=fd.get('volunteer_type')||'General';
+      const {error}=await sb.rpc('public_capture_action',{
+        p_website_id:w.id,p_campaign_id:currentCampaign?.id||null,p_action_type:action,
+        p_first_name:fd.get('first_name')||null,p_last_name:fd.get('last_name')||null,
+        p_email:fd.get('email')||null,p_postcode:fd.get('postcode')||null,p_phone:null,
+        p_source:new URLSearchParams(location.search).get('source')||'website',p_payload:payload
+      });
+      const msg=document.createElement('div');msg.className='submit-message '+(error?'error':'success');
+      msg.textContent=error?'We could not save that just now. Please try again.':(action==='volunteer'?'Thank you — the campaign has your offer to help.':'Thank you — your support has been recorded.');
+      actionForm.appendChild(msg);button.disabled=false;button.textContent=old;if(!error)actionForm.reset();
+    })
+  });
+
 })();
