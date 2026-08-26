@@ -32,6 +32,8 @@
   const campaignsR=await sb.from('campaigns').select('*').eq('website_id',w.id).order('created_at');
   const campaigns=campaignsR.error?[]:(campaignsR.data||[]);
   const currentCampaign=campaigns[0]||null;
+  if(window.CPAttribution) await window.CPAttribution.track({websiteId:w.id});
+  const attributionContext=()=>window.CPAttribution?window.CPAttribution.context():{session_id:null,attribution:{},source:'website'};
 
   const c=w.content||{};
   const flat=c.candidateName?c:null;
@@ -86,13 +88,13 @@
         else answers[q.id]=fd.get(q.id)||'';
       });
       const geography=await resolvePostcode(fd.get('postcode'));
-      const {error}=await sb.rpc('public_submit_survey_geo',{
+      const {error}=await sb.rpc('public_submit_survey_attributed',{
         p_website_id:w.id,p_survey_id:survey.id,p_campaign_id:currentCampaign?.id||null,
         p_first_name:fd.get('first_name')||null,p_last_name:fd.get('last_name')||null,
         p_email:fd.get('email')||null,p_postcode:fd.get('postcode')||null,p_phone:null,
-        p_source:new URLSearchParams(location.search).get('source')||'website',p_answers:answers,
+        p_source:attributionContext().source||'website',p_answers:answers,
         p_address:{line1:fd.get('address_line1')||'',line2:fd.get('address_line2')||'',town_city:fd.get('town_city')||''},
-        p_geography:geography
+        p_geography:geography,p_session_id:attributionContext().session_id,p_attribution:attributionContext().attribution
       });
       const msg=document.createElement('div');msg.className='submit-message '+(error?'error':'success');
       msg.textContent=error?'We could not submit your response. Please try again.':'Thank you — your views have been recorded.';
@@ -113,13 +115,13 @@
       const payload={consent_email:fd.get('consent_email')==='true'};
       if(action==='volunteer')payload.volunteer_type=fd.get('volunteer_type')||'General';
       const geography=await resolvePostcode(fd.get('postcode'));
-      const {error}=await sb.rpc('public_capture_action_geo',{
+      const {error}=await sb.rpc('public_capture_action_attributed',{
         p_website_id:w.id,p_campaign_id:currentCampaign?.id||null,p_action_type:action,
         p_first_name:fd.get('first_name')||null,p_last_name:fd.get('last_name')||null,
         p_email:fd.get('email')||null,p_postcode:fd.get('postcode')||null,p_phone:null,
-        p_source:new URLSearchParams(location.search).get('source')||'website',p_payload:payload,
+        p_source:attributionContext().source||'website',p_payload:payload,
         p_address:{line1:fd.get('address_line1')||'',line2:fd.get('address_line2')||'',town_city:fd.get('town_city')||''},
-        p_geography:geography
+        p_geography:geography,p_session_id:attributionContext().session_id,p_attribution:attributionContext().attribution
       });
       const msg=document.createElement('div');msg.className='submit-message '+(error?'error':'success');
       msg.textContent=error?'We could not save that just now. Please try again.':(action==='volunteer'?'Thank you — the campaign has your offer to help.':'Thank you — your support has been recorded.');
