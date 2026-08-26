@@ -1,13 +1,13 @@
 document.addEventListener('cp-admin-ready',async()=>{
 const {sb,orgId}=window.CP_ADMIN;
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const [ov,ac,act,ints,insights,journeys,geo]=await Promise.all([
+const [ov,ac,act,ints,insights,journeys,geo,trendData,geoPerf]=await Promise.all([
   sb.rpc('org_admin_overview',{p_org:orgId}),
   sb.rpc('org_admin_accounts',{p_org:orgId}),
   sb.rpc('org_admin_recent_activity',{p_org:orgId,p_limit:8}),
   sb.rpc('org_admin_integration_summary',{p_org:orgId}),
   sb.rpc('org_admin_network_insights',{p_org:orgId}),
-  sb.rpc('org_admin_supporter_journeys',{p_org:orgId,p_limit:12}),sb.rpc('org_admin_geography_insights',{p_org:orgId})
+  sb.rpc('org_admin_supporter_journeys',{p_org:orgId,p_limit:12}),sb.rpc('org_admin_growth_trends',{p_org:orgId,p_days:90}),sb.rpc('org_admin_geographic_performance',{p_org:orgId}),sb.rpc('org_admin_geography_insights',{p_org:orgId})
 ]);
 if(ov.error||insights.error){
   adminDashboardMessage.innerHTML=`<div class="state-banner error">${esc((ov.error||insights.error).message)}</div>`;
@@ -40,6 +40,15 @@ adminSurveyPerformance.innerHTML=performance(i.surveys||[],'responses');
 
 const gd=geo.data||{},consts=(gd.constituencies||[]).filter(x=>x.name!=='Unknown').slice(0,5);
 adminGeoTeaser.innerHTML=`<div class="admin-geo-summary"><div><strong>${gd.resolved||0}</strong><span>People resolved</span></div><div><strong>${gd.unresolved||0}</strong><span>Need geography</span></div></div><div class="admin-geo-top">${consts.map(x=>`<a href="admin-data.html?constituency=${encodeURIComponent(x.name)}"><span>${esc(x.name)}</span><strong>${x.people}</strong></a>`).join('')||'<p class="muted">No constituency data yet.</p>'}</div>`;
+const trendRows=trendData?.data||[],last30=trendRows.slice(-30),last7=trendRows.slice(-7);
+const sumPerf=(rows,key)=>rows.reduce((n,x)=>n+Number(x[key]||0),0);
+const fastest=[...(geoPerf?.data||[])].filter(x=>x.constituency!=='Unknown').sort((a,b)=>Number(b.growth_rate||0)-Number(a.growth_rate||0))[0];
+if(document.getElementById('dashboardPerformance'))dashboardPerformance.innerHTML=[
+ ['New People · 7d',sumPerf(last7,'new_people')],
+ ['New People · 30d',sumPerf(last30,'new_people')],
+ ['Campaign backs · 30d',sumPerf(last30,'campaign_backs')],
+ ['Survey responses · 30d',sumPerf(last30,'survey_responses')]
+].map(x=>`<div class="dashboard-perf-cell"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('')+(fastest?`<a class="dashboard-perf-fastest" href="admin-data.html?constituency=${encodeURIComponent(fastest.constituency)}"><span>Fastest-growing constituency</span><strong>${esc(fastest.constituency)}</strong><small>${Number(fastest.growth_rate||0).toFixed(1)}% 30-day growth</small></a>`:'');
 adminSupporterJourneys.innerHTML=(journeys.data||[]).map(j=>{
   const origin=[j.website_name,j.campaign_name,j.survey_name].filter(Boolean).join(' · ')||'Direct';
   const consent=j.consent_email===true?'Email opt-in':j.consent_email===false?'No email opt-in':'Consent unknown';
