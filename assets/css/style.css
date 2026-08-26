@@ -1080,3 +1080,8 @@ table tbody tr:hover{background:#f8fbfe!important}
 .cp-dialog-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .cp-dialog-head h3{margin:0;font-size:22px}.cp-dialog-x{border:0;background:transparent;font-size:24px;cursor:pointer;color:#738197}
 .cp-dialog-message{color:#617289;line-height:1.5}.cp-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+.website-editor-switch{display:grid;gap:5px;min-width:290px}
+.website-editor-switch label{font-size:10px;font-weight:900;color:#5d7088;text-transform:uppercase;letter-spacing:.04em}
+.website-editor-switch select{min-height:42px;background:#fff;border:1px solid #cbd7e3;padding:0 12px;font:inherit;color:#173858}
+@media(max-width:760px){.website-editor-toolbar{align-items:stretch;gap:10px;flex-direction:column}.website-editor-switch{min-width:0}}

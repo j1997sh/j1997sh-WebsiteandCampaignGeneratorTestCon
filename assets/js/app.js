@@ -793,6 +793,17 @@ function saveSurveyQuestions(q){localStorage.setItem('cpSurvey:'+cpCurrentSiteId
   document.getElementById('creativeDrawerClose').onclick=()=>workspace.classList.remove('drawer-open');
   document.getElementById('creativeFormat').onchange=e=>{canvas.className='creative-canvas '+e.target.value};
   document.getElementById('creativeReset').onclick=()=>{state.primary='#08254a';state.background='#08254a';state.fade='#08254a';state.text='#ffffff';render()};
+  const quickImageButton=document.getElementById('creativeAddImage');
+  const quickImageInput=document.getElementById('creativeQuickImageInput');
+  if(quickImageButton&&quickImageInput){
+    quickImageButton.onclick=()=>quickImageInput.click();
+    quickImageInput.onchange=()=>{
+      const f=quickImageInput.files?.[0];if(!f)return;
+      const r=new FileReader();
+      r.onload=()=>{state.image=r.result;render();quickImageButton.textContent='Replace image'};
+      r.readAsDataURL(f);
+    };
+  }
   document.getElementById('creativeExport').onclick=()=>alert(' export the current graphic as PNG.');
   render();
 })();

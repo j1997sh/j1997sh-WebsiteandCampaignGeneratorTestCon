@@ -3,7 +3,7 @@
   const sb=window.cpSupabase;
   const params=new URLSearchParams(location.search),ref=params.get('site')||params.get('id');
   const frame=document.getElementById('weFrame'),hotspots=document.getElementById('weHotspots'),panelEmpty=document.getElementById('wePanelEmpty'),panelContent=document.getElementById('wePanelContent'),saveState=document.getElementById('weSaveState'),errorBox=document.getElementById('weError'),device=document.getElementById('weDevice');
-  let website=null,surveys=[],surveyQuestions=[],imageUrls={},saveTimer=null;
+  let website=null,allWebsites=[],surveys=[],surveyQuestions=[],imageUrls={},saveTimer=null;
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const fail=m=>{errorBox.hidden=false;errorBox.textContent=m};
   const saving=()=>saveState.querySelector('span:last-child').textContent='Saving…';
@@ -53,18 +53,33 @@
   async function load(){
     const {data:{session}}=await sb.auth.getSession();
     if(!session){location.replace('login.html?next='+encodeURIComponent(location.pathname.split('/').pop()+location.search));return false}
-    let q=sb.from('websites').select('*');
+    const listR=await sb.from('websites').select('*').order('created_at');
+    if(listR.error){fail('Could not load websites: '+listR.error.message);return false}
+    allWebsites=listR.data||[];
+    if(!allWebsites.length){fail('No websites found.');return false}
+
     if(ref){
-      if(/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(ref))q=q.eq('id',ref);
-      else q=q.eq('slug',ref);
-    }else q=q.order('created_at').limit(1);
-    const wr=ref?await q.maybeSingle():await q.maybeSingle();
-    if(wr.error||!wr.data){fail(wr.error?'Could not load this website: '+wr.error.message:'Website not found.');return false}
-    website=wr.data;website.content=normalise();
+      website=allWebsites.find(w=>w.id===ref||w.slug===ref)||null;
+    }else{
+      website=allWebsites[0]||null;
+    }
+    if(!website){fail('Website not found.');return false}
+    website.content=normalise();
     const [sr,qr,acc]=await Promise.all([sb.from('surveys').select('*').order('created_at'),sb.from('survey_questions').select('*').order('position'),account()]);
     surveys=sr.data||[];surveyQuestions=qr.data||[];
     imageUrls.hero=await signed(website.hero_image_path);imageUrls.about=await signed(website.about_image_path);
-    weTopTitle.textContent=website.name;weBackLink.href='website-overview.html?id='+website.id;
+    weTopTitle.textContent=website.name;
+    const back=document.getElementById('weBackLink'); if(back) back.href='website-overview.html?id='+website.id;
+    const websiteSelect=document.getElementById('weWebsiteSelect');
+    if(websiteSelect){
+      websiteSelect.innerHTML=allWebsites.map(w=>`<option value="${w.id}" ${w.id===website.id?'selected':''}>${esc(w.name)}${w.area?' — '+esc(w.area):''}</option>`).join('');
+      websiteSelect.onchange=()=>{
+        const nextId=websiteSelect.value;
+        if(!nextId||nextId===website.id)return;
+        websiteSelect.disabled=true;
+        location.href='editor.html?site='+encodeURIComponent(nextId);
+      };
+    }
     const ws=document.getElementById('websiteSidebarIdentity');ws.querySelector('strong').textContent=website.name;ws.querySelector('small').textContent=website.area||'Website';
     const user=document.getElementById('websiteEditorUser'),display=acc.name||[acc.first_name,acc.last_name].filter(Boolean).join(' ')||'Signed in';user.querySelector('.avatar').textContent=display.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();user.querySelector('strong').textContent=display;user.querySelector('small').textContent='Signed in';
     weSummary.innerHTML=`<dl class="profile-data"><dt>Status</dt><dd>${esc(website.status)}</dd><dt>Area</dt><dd>${esc(website.area||'—')}</dd><dt>Survey</dt><dd>${esc(surveys.find(s=>s.id===website.selected_survey_id)?.name||'None')}</dd></dl>`;

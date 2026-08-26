@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Website editor | Campaign Platform</title>
-<link rel="stylesheet" href="assets/css/style.css?v=20260826-campaign-delete">
+<link rel="stylesheet" href="assets/css/style.css?v=20260826-website-switcher-creative-image">
 </head>
 <body class="app-body">
 <div class="app-shell">
@@ -32,7 +32,10 @@
 <div class="app-content website-editor-page">
   <div class="editor-scope-note"><strong>Website editor</strong><span>Edit the main candidate website.</span><span class="autosave-standard" id="weSaveState"><span class="dot"></span><span>Saved</span></span></div>
   <div class="website-editor-toolbar">
-    <a class="text-button" id="weBackLink" href="websites.html">← Back to website</a>
+    <div class="website-editor-switch">
+      <label for="weWebsiteSelect">Editing website</label>
+      <select id="weWebsiteSelect" aria-label="Editing website"></select>
+    </div>
     <div class="campaign-editor-view-switch"><button class="view-chip active" data-we-width="desktop">Desktop</button><button class="view-chip" data-we-width="tablet">Tablet</button><button class="view-chip" data-we-width="mobile">Mobile</button></div>
   </div>
   <div id="weError" class="state-banner error" hidden></div>
@@ -53,6 +56,6 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase-config.js?v=20260826-website-editor-fix"></script>
-<script src="assets/js/website-editor-stage2.js?v=20260826-website-editor-fix"></script>
+<script src="assets/js/website-editor-stage2.js?v=20260826-website-switcher-creative-image"></script>
 </body>
 </html>
