@@ -191,11 +191,13 @@ window.CP = window.CP || (() => {
 })();
 
 
-document.querySelectorAll('[data-demo-login]').forEach(form=>{
-  form.addEventListener('submit',e=>{e.preventDefault();localStorage.setItem('cpLoggedIn','yes');location.href='dashboard.html'});
-});
+if(!window.CP_STAGE2){
+  document.querySelectorAll('[data-demo-login]').forEach(form=>{
+    form.addEventListener('submit',e=>{e.preventDefault();localStorage.setItem('cpLoggedIn','yes');location.href='dashboard.html'});
+  });
+}
 document.querySelectorAll('[data-save]').forEach(btn=>btn.addEventListener('click',()=>{const old=btn.textContent;btn.textContent='Saved';setTimeout(()=>btn.textContent=old,900)}));
-const logout=document.getElementById('logoutLink');if(logout)logout.addEventListener('click',()=>localStorage.removeItem('cpLoggedIn'));
+const logout=document.getElementById('logoutLink');if(logout&&!window.CP_STAGE2)logout.addEventListener('click',()=>localStorage.removeItem('cpLoggedIn'));
 
 function cpDefaults(){
   return {

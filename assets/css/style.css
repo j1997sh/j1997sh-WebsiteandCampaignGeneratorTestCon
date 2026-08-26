@@ -752,3 +752,9 @@ table{width:100%;border-collapse:collapse;min-width:850px}th,td{text-align:left;
   .app-topbar{padding:10px 14px!important}
   .app-topbar .global-search-wrap{display:none}
 }
+
+#cpStage2Boot{position:fixed;inset:0;background:#eef3f8;z-index:99999;display:grid;place-items:center}
+.cp-stage2-boot-card{background:#fff;border:1px solid #d8e1ea;padding:28px;min-width:310px;display:grid;gap:8px;text-align:center;color:#08254a}
+.cp-stage2-boot-card small{color:#718198}
+.cp-stage2-spinner{width:28px;height:28px;border:3px solid #dbe6f0;border-top-color:#1476d4;border-radius:50%;margin:0 auto 8px;animation:cp-spin .7s linear infinite}
+@keyframes cp-spin{to{transform:rotate(360deg)}}
