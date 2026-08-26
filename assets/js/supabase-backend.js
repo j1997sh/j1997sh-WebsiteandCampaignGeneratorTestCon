@@ -313,12 +313,12 @@
     return data;
   };
 
-  window.CPStage2.createCampaignRemote=async(name,websiteId,surveyId=null)=>{
+  window.CPStage2.createCampaignRemote=async(name,surveyId=null)=>{
     const aid=await accountId();
     const id=crypto.randomUUID();
     const slug=String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
     const {data,error}=await sb.from('campaigns').insert({
-      id,account_id:aid,website_id:websiteId,survey_id:surveyId||null,name,slug,status:'draft',
+      id,account_id:aid,website_id:null,survey_id:surveyId||null,name,slug,status:'draft',
       headline:name,supporting_copy:'',key_points:['Key point one','Key point two','Key point three'],
       settings:{},supporter_count:0
     }).select('*').single();
@@ -421,7 +421,7 @@
   async function syncCampaign(c){
     const aid=await accountId();
     const r=await sb.from('campaigns').upsert({
-      id:c.id,account_id:aid,website_id:c.websiteId,survey_id:c.surveyId||null,
+      id:c.id,account_id:aid,website_id:null,survey_id:c.surveyId||null,
       name:c.name,slug:c.slug||null,status:dbStatus(c.status),headline:c.headline||c.name,
       supporting_copy:c.support||'',image_path:c.imagePath||null,preview_path:c.previewPath||null,key_points:c.points||[],
       settings:c.settings||{},supporter_count:c.supporterCount||0

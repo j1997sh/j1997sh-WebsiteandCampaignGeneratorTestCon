@@ -1,1 +1,47 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>New Campaign | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-centered-auth"></head><body class="app-body"><div class="app-shell"><aside class="app-sidebar"><div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Workspace</small></span></div><div class="workspace-select"><strong>Joe Bloggs</strong><small>Bloggs Ward</small></div><nav class="side-nav"><a href="dashboard.html">Dashboard</a><a href="websites.html">Websites</a><a class="active" href="campaigns.html">Campaigns</a><a href="creative.html">Creative</a><a href="people.html">People</a><a href="surveys.html">Surveys</a><a href="domains.html">Domains</a><a href="integrations.html">Integrations</a><a href="settings.html">Settings</a></nav><div class="side-bottom"><div class="user-chip"><span class="avatar">JB</span><span><strong>Joe Bloggs</strong><small>Signed in</small></span></div><a class="side-nav logout-link" style="padding:10px 12px;display:block" href="login.html">Log out</a></div></aside><main class="app-main"><header class="app-topbar"><h1>New campaign</h1><div></div></header><div class="app-content"><div class="create-flow" data-create-kind="campaign"><div class="create-progress"><span class="done"></span><span></span><span></span></div><div class="create-step active" data-step="1"><h2>Name your campaign</h2><label class="field"><span>Name</span><input id="createName" placeholder="Campaign name"></label><button class="btn" id="createNext1" style="margin-top:14px">Continue</button></div><div class="create-step" data-step="2"><h2>Link it</h2><label class="field"><span>Website</span><select id="createWebsite"></select></label><label class="field" style="margin-top:10px"><span>Survey</span><select id="createSurvey"></select></label><div class="button-row" style="margin-top:14px"><button class="btn secondary" id="createBack2">Back</button><button class="btn" id="createNext2">Continue</button></div></div><div class="create-step" data-step="3"><h2>Ready to create</h2><p class="muted" id="createSummary"></p><div class="button-row"><button class="btn secondary" id="createBack3">Back</button><button class="btn" id="createConfirm">Create campaign</button></div></div></div></div></main></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=20260826-centered-auth"></script><script src="assets/js/app.js?v=20260826-centered-auth"></script><script src="assets/js/supabase-backend.js?v=20260826-centered-auth"></script></body></html>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>New campaign | Campaign Platform</title>
+<link rel="stylesheet" href="assets/css/style.css?v=20260826-standalone-campaign-product">
+</head>
+<body class="app-body">
+<div class="app-shell">
+<aside class="app-sidebar">
+  <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Workspace</small></span></div>
+  <nav class="side-nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="websites.html">Websites</a>
+    <a class="active" href="campaigns.html">Campaigns</a>
+    <a href="creative.html">Creative</a>
+    <a href="people.html">People</a>
+    <a href="surveys.html">Surveys</a>
+    <a href="domains.html">Domains</a>
+    <a href="integrations.html">Integrations</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+  <div class="side-bottom"><a class="side-nav logout-link" style="padding:10px 12px;display:block" href="login.html">Log out</a></div>
+</aside>
+<main class="app-main">
+<header class="app-topbar"><div><h1>New campaign</h1></div><a class="btn secondary small" href="campaigns.html">Cancel</a></header>
+<div class="app-content">
+  <section class="create-flow standalone-create-card">
+    <div class="create-flow-intro">
+      <h2>Create a campaign microsite</h2>
+      <p>A standalone campaign page with its own branding, signup and public URL.</p>
+    </div>
+    <form id="standaloneCampaignCreate">
+      <label class="field"><span>Campaign name</span><input id="campaignCreateName" placeholder="e.g. Save Winter Fuel" required></label>
+      <button class="btn" id="campaignCreateSubmit" type="submit">Create campaign</button>
+      <div id="campaignCreateMessage"></div>
+    </form>
+  </section>
+</div>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-config.js?v=20260826-standalone-campaign-product"></script>
+<script src="assets/js/campaign-create-stage2.js?v=20260826-standalone-campaign-product"></script>
+</body>
+</html>

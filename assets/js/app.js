@@ -179,7 +179,7 @@ window.CP = window.CP || (() => {
   }
   function createCampaign(name){
     const w=activeWebsite();
-    const item={id:uid('campaign'),websiteId:w?.id||null,name,slug:String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''),status:'Draft',headline:name,support:'',points:['Key point one','Key point two','Key point three'],surveyId:w?.surveyId||null,supporterCount:0,updatedAt:new Date().toISOString()};
+    const item={id:uid('campaign'),websiteId:null,name,slug:String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''),status:'Draft',headline:name,support:'',points:['Key point one','Key point two','Key point three'],surveyId:null,supporterCount:0,updatedAt:new Date().toISOString()};
     return put('campaigns',item)
   }
   function saveGraphic(g){
