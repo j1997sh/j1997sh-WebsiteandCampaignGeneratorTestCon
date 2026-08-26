@@ -900,7 +900,7 @@ function cpSelectedSurvey(){
   document.getElementById('dashCampaignBackers').textContent=campaigns.reduce((n,c)=>n+(c.supporterCount||0),0);
   document.getElementById('dashSurveyResponses').textContent=surveys.reduce((n,s)=>n+(s.responses||0),0);
   document.getElementById('dashVolunteers').textContent=people.filter(p=>p.volunteer).length;
-  document.getElementById('dashCampaignList').innerHTML=campaigns.map(c=>`<div class="campaign-row"><div><strong>${c.name}</strong><small>${c.supporterCount||0} supporters · ${c.status}${c.surveyId?' · Survey linked':''}</small></div><div class="mini-actions"><a class="btn secondary small" href="campaign-editor.html?id=${c.id}">Edit</a><a class="link-arrow" href="campaigns.html">→</a></div></div>`).join('');
+  document.getElementById('dashCampaignList').innerHTML=campaigns.map(c=>`<div class="campaign-row"><div><strong>${c.name}</strong><small>${c.supporterCount||0} supporters · ${c.status}${c.surveyId?' · Survey linked':''}</small></div><div class="mini-actions"><a class="btn secondary small" href="campaign-overview.html?id=${c.id}">Edit</a><a class="link-arrow" href="campaigns.html">→</a></div></div>`).join('');
   const w=d.websites[d.activeWebsiteId];
   document.getElementById('dashWebsiteStatus').innerHTML=w?`<span class="status-chip published">${w.status}</span><h3>${w.domain||w.name}</h3><p class="muted">${w.surveyId?'Survey: '+(d.surveys[w.surveyId]?.name||'Assigned'):'No survey assigned'}</p><a class="btn secondary small" href="editor.html?site=joe-bloggs">Edit site</a>`:'';
   document.getElementById('dashRecentActivity').innerHTML=(d.actions||[]).slice(0,5).map(a=>`<div class="compact-activity"><div><strong>${a.text}</strong><small>${new Date(a.time).toLocaleString()}</small></div></div>`).join('');
@@ -971,7 +971,7 @@ function cpSelectedSurvey(){
   const grid=document.getElementById('campaignLibraryGrid');if(!grid)return;
   function render(){
     const d=CP.db(), campaigns=Object.values(d.campaigns);
-    grid.innerHTML=campaigns.map(c=>`<article class="campaign-card"><div class="campaign-preview"></div><span class="status-chip ${c.status==='Published'?'published':'draft'}">${c.status}</span><h3>${c.name}</h3><p class="muted">${c.supporterCount||0} supporters${c.surveyId?' · '+(d.surveys[c.surveyId]?.name||'Survey linked'):''}</p><div class="library-card-actions"><a class="btn small" href="campaign-editor.html?id=${c.id}">Edit</a><button class="btn secondary small" data-dup="${c.id}">Duplicate</button><button class="btn secondary small" data-del="${c.id}">Delete</button><a class="btn secondary small" href="creative-editor.html?template=campaign&campaign=${c.id}">Create graphic</a></div></article>`).join('');
+    grid.innerHTML=campaigns.map(c=>`<article class="campaign-card"><div class="campaign-preview"></div><span class="status-chip ${c.status==='Published'?'published':'draft'}">${c.status}</span><h3>${c.name}</h3><p class="muted">${c.supporterCount||0} supporters${c.surveyId?' · '+(d.surveys[c.surveyId]?.name||'Survey linked'):''}</p><div class="library-card-actions"><a class="btn small" href="campaign-overview.html?id=${c.id}">Edit</a><button class="btn secondary small" data-dup="${c.id}">Duplicate</button><button class="btn secondary small" data-del="${c.id}">Delete</button><a class="btn secondary small" href="creative-editor.html?template=campaign&campaign=${c.id}">Create graphic</a></div></article>`).join('');
     grid.querySelectorAll('[data-dup]').forEach(b=>b.onclick=()=>{CP.duplicate('campaigns',b.dataset.dup);render()});
     grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(confirm('Delete this campaign?')){CP.remove('campaigns',b.dataset.del);render()}})
   }
@@ -1397,3 +1397,92 @@ function cpCreativeSnapshot(){
 
   render()
 })();
+
+
+/* PRODUCT COHERENCE HELPERS */
+CP.archive=function(type,id){return CP.patch(type,id,{status:'Archived'})};
+CP.restore=function(type,id){return CP.patch(type,id,{status:'Draft'})};
+CP.relationships=function(type,id){
+  const d=CP.db();
+  if(type==='campaign'){
+    const c=d.campaigns[id];
+    return {
+      website:c?.websiteId?d.websites[c.websiteId]:null,
+      survey:c?.surveyId?d.surveys[c.surveyId]:null,
+      graphics:Object.values(d.graphics||{}).filter(g=>g.campaignId===id),
+      supporters:Object.values(d.people||{}).filter(p=>(d.actions||[]).some(a=>a.personId===p.id&&a.campaignId===id))
+    }
+  }
+  if(type==='survey'){
+    const s=d.surveys[id];
+    return {
+      website:Object.values(d.websites||{}).find(w=>w.surveyId===id)||null,
+      campaigns:Object.values(d.campaigns||{}).filter(c=>c.surveyId===id)
+    }
+  }
+  if(type==='graphic'){
+    const g=d.graphics[id];
+    return {
+      website:g?.websiteId?d.websites[g.websiteId]:null,
+      campaign:g?.campaignId?d.campaigns[g.campaignId]:null
+    }
+  }
+  return {}
+};
+
+
+/* GLOBAL UNDO */
+(function globalUndo(){
+  if(document.getElementById('globalUndo'))return;
+  const el=document.createElement('div');el.className='undo-global';el.id='globalUndo';el.innerHTML='<span id="globalUndoText">Change made</span><button id="globalUndoBtn">Undo</button>';document.body.appendChild(el);
+  let undo=null;
+  window.CPUndo=(label,fn)=>{undo=fn;document.getElementById('globalUndoText').textContent=label;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),4500)};
+  document.getElementById('globalUndoBtn').onclick=()=>{if(undo)undo();undo=null;el.classList.remove('show')}
+})();
+
+/* CAMPAIGN OVERVIEW */
+(function campaignOverview(){
+  const root=document.getElementById('campaignOverviewRoot');if(!root)return;
+  const id=new URLSearchParams(location.search).get('id');const c=CP.get('campaigns',id);if(!c){root.innerHTML='<div class="empty-state-card"><h3>Campaign not found</h3></div>';return}
+  const rel=CP.relationships('campaign',id);
+  const d=CP.db();
+  root.innerHTML=`<div class="campaign-overview-head"><div><span class="status-chip ${c.status==='Published'?'published':c.status==='Archived'?'archived':'draft'}">${c.status}</span><h2 style="margin:9px 0 5px">${c.name}</h2><p class="muted">${c.support||''}</p></div><div class="campaign-overview-actions"><a class="btn small" href="campaign-overview.html?id=${c.id}">Edit microsite</a>${rel.survey?`<a class="btn secondary small" href="survey-editor.html?id=${rel.survey.id}">Open survey</a>`:''}<a class="btn secondary small" href="creative-editor.html?template=campaign&campaign=${c.id}">Create graphic</a></div></div>
+  <div class="campaign-stat-grid"><div class="campaign-stat"><strong>${c.supporterCount||0}</strong><span>Supporters</span></div><div class="campaign-stat"><strong>${rel.survey?.responses||0}</strong><span>Survey responses</span></div><div class="campaign-stat"><strong>${rel.graphics.length}</strong><span>Saved graphics</span></div><div class="campaign-stat"><strong>${d.integrations?.nationbuilder?.connected?'✓':'—'}</strong><span>CRM sync</span></div></div>
+  <div class="dashboard-grid"><section class="panel"><h3>Linked items</h3><div class="linked-list"><div class="linked-item"><div><strong>Website</strong><small>${rel.website?.name||'Not linked'}</small></div>${rel.website?'<a class="btn secondary small" href="editor.html">Open</a>':''}</div><div class="linked-item"><div><strong>Survey</strong><small>${rel.survey?.name||'No survey linked'}</small></div>${rel.survey?`<a class="btn secondary small" href="survey-editor.html?id=${rel.survey.id}">Open</a>`:''}</div><div class="linked-item"><div><strong>Graphics</strong><small>${rel.graphics.length} linked graphic${rel.graphics.length===1?'':'s'}</small></div><a class="btn secondary small" href="creative.html">View</a></div></div></section><section class="panel"><h3>Recent activity</h3>${(d.actions||[]).filter(a=>a.campaignId===id).slice(0,5).map(a=>`<div class="compact-activity"><strong>${a.text}</strong><small>${new Date(a.time).toLocaleString()}</small></div>`).join('')||'<div class="empty-state-card compact"><p>No campaign activity yet.</p></div>'}</section></div>`;
+})();
+
+/* GUIDED CREATE */
+(function guidedCreate(){
+  const flow=document.querySelector('[data-create-kind]');if(!flow)return;
+  const kind=flow.dataset.createKind,steps=[...flow.querySelectorAll('.create-step')],bars=[...flow.querySelectorAll('.create-progress span')];
+  const websiteSel=document.getElementById('createWebsite'),surveySel=document.getElementById('createSurvey');
+  Object.values(CP.db().websites).forEach(w=>websiteSel.insertAdjacentHTML('beforeend',`<option value="${w.id}">${w.name} — ${w.area}</option>`));
+  if(surveySel){surveySel.innerHTML='<option value="">No survey</option>'+Object.values(CP.db().surveys).map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}
+  function show(n){steps.forEach((s,i)=>s.classList.toggle('active',i===n-1));bars.forEach((b,i)=>b.classList.toggle('done',i<n))}
+  document.getElementById('createNext1').onclick=()=>{if(!document.getElementById('createName').value.trim())return;show(2)};
+  document.getElementById('createBack2').onclick=()=>show(1);
+  document.getElementById('createNext2').onclick=()=>{document.getElementById('createSummary').textContent=`${document.getElementById('createName').value} will be linked to ${websiteSel.options[websiteSel.selectedIndex].text}.`;show(3)};
+  document.getElementById('createBack3').onclick=()=>show(2);
+  document.getElementById('createConfirm').onclick=()=>{
+    const name=document.getElementById('createName').value.trim();
+    if(kind==='campaign'){const c=CP.createCampaign(name);CP.patch('campaigns',c.id,{websiteId:websiteSel.value,surveyId:surveySel.value||null});location.href='campaign-overview.html?id='+c.id}
+    else {const s=CP.createSurvey(name);CP.patch('surveys',s.id,{websiteId:websiteSel.value});location.href='survey-editor.html?id='+s.id}
+  }
+})();
+
+/* Redirect old prompt buttons to guided flows */
+const oldCampaignNew=document.getElementById('newCampaignBtn');if(oldCampaignNew)oldCampaignNew.onclick=()=>location.href='campaign-create.html';
+document.querySelectorAll('#createAnotherSurvey,#createFirstSurvey').forEach(b=>b.onclick=()=>location.href='survey-create.html');
+
+/* CONSISTENT AUTOSAVE INDICATOR */
+(function autosavePattern(){
+  ['campaignAutosaveText','autosaveText'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.closest('.autosave-indicator,.autosave-pill')?.classList.remove('saving')
+  })
+})();
+
+/* LIGHTWEIGHT ERROR STATES */
+window.addEventListener('error',e=>{
+  const app=document.querySelector('.app-content');if(!app||document.getElementById('runtimeErrorBanner'))return;
+  const b=document.createElement('div');b.id='runtimeErrorBanner';b.className='state-banner error';b.textContent='Something on this page did not load correctly. Your saved data has not been removed.';app.prepend(b)
+});

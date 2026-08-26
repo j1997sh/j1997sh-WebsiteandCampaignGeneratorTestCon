@@ -673,3 +673,38 @@ table{width:100%;border-collapse:collapse;min-width:850px}th,td{text-align:left;
 .campaign-visual-shell .drawer{position:relative;display:none;width:auto;height:100%;transform:none}
 .campaign-visual-shell .visual-editor-workspace.drawer-open .drawer{display:block}
 .campaign-site-img{min-height:360px;background:#d8e2eb center/cover no-repeat}
+
+/* Product coherence */
+.relationship-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.relationship-card{background:#fff;border:1px solid var(--line);padding:14px}
+.relationship-card strong{display:block}.relationship-card small{color:var(--muted)}
+.create-flow{max-width:720px;background:#fff;border:1px solid var(--line);padding:24px}
+.create-step{display:none}.create-step.active{display:block}
+.create-progress{display:flex;gap:8px;margin-bottom:20px}
+.create-progress span{height:7px;flex:1;background:#e5ebf1}.create-progress span.done{background:var(--blue)}
+.state-banner{padding:11px 13px;border:1px solid var(--line);background:#fff;margin-bottom:12px;font-size:12px}
+.state-banner.error{background:#fdecea;border-color:#efc5c1;color:#8a281f}
+.state-banner.warn{background:#fff5df;border-color:#efd39c;color:#7c5500}
+.state-banner.success{background:#eaf8ef;border-color:#c8e8d2;color:#16663a}
+.library-overflow{position:relative}
+.library-menu{display:none;position:absolute;right:0;top:32px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);z-index:20;min-width:150px}
+.library-menu.open{display:block}
+.library-menu button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:9px 11px}
+.library-menu button:hover{background:#f5f8fb}
+.empty-state-card.compact{padding:20px}
+.campaign-overview-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}
+.campaign-overview-actions{display:flex;gap:8px;flex-wrap:wrap}
+.campaign-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.campaign-stat{background:#fff;border:1px solid var(--line);padding:14px}
+.campaign-stat strong{font-size:28px;display:block}
+.linked-list{display:grid;gap:9px}
+.linked-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);background:#fff}
+.linked-item small{display:block;color:var(--muted)}
+.autosave-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.autosave-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.autosave-pill.saving .dot{background:var(--amber)}
+.undo-global{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#061a34;color:#fff;padding:11px 13px;display:none;gap:12px;align-items:center;z-index:220}
+.undo-global.show{display:flex}
+.undo-global button{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 9px;font-weight:900}
+@media(max-width:980px){.relationship-grid,.campaign-stat-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.relationship-grid,.campaign-stat-grid{grid-template-columns:1fr}.campaign-overview-head{display:block}.campaign-overview-actions{margin-top:12px}}
