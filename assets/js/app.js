@@ -1,4 +1,196 @@
 
+/* =========================================================
+   CAMPAIGN PLATFORM SHARED STORE — Stage 1
+   One local prototype database for all product areas.
+   ========================================================= */
+window.CP = window.CP || (() => {
+  const KEY='campaignPlatformDB:v1';
+
+  const seed = {
+    account:{id:'acct-joe',name:'Joe Bloggs',initials:'JB'},
+    activeWebsiteId:'site-joe-bloggs',
+    websites:{
+      'site-joe-bloggs':{
+        id:'site-joe-bloggs',
+        name:'Joe Bloggs',
+        area:'Bloggs Ward',
+        type:'Councillor Lite',
+        status:'Published',
+        domain:'joe-bloggs.example.org',
+        surveyId:'survey-residents',
+        branding:{primary:'#08254a',secondary:'#1476d4',text:'#ffffff'},
+        updatedAt:'2026-08-26T07:00:00'
+      }
+    },
+    campaigns:{
+      'campaign-bus':{
+        id:'campaign-bus',
+        websiteId:'site-joe-bloggs',
+        name:'Save the Bloggs Ward bus',
+        slug:'save-the-bus',
+        status:'Published',
+        headline:'Save the Bloggs Ward bus',
+        support:'Protect the route and make the case for a reliable service local residents can depend on.',
+        points:['Protect the current route','Make the case for a reliable timetable','Keep communities connected'],
+        surveyId:'survey-bus',
+        supporterCount:2,
+        updatedAt:'2026-08-26T06:42:00'
+      },
+      'campaign-roads':{
+        id:'campaign-roads',
+        websiteId:'site-joe-bloggs',
+        name:'Fix our roads',
+        slug:'fix-our-roads',
+        status:'Draft',
+        headline:'Fix our roads and pavements',
+        support:'A local campaign for safer streets and better maintenance.',
+        points:['Repair the worst potholes','Improve dangerous crossings','Publish a local repair plan'],
+        surveyId:'survey-residents',
+        supporterCount:0,
+        updatedAt:'2026-08-26T06:10:00'
+      }
+    },
+    surveys:{
+      'survey-residents':{
+        id:'survey-residents',
+        websiteId:'site-joe-bloggs',
+        name:'Residents survey',
+        status:'Published',
+        responses:7,
+        questions:[
+          {id:'q-issue',type:'single',label:'What is the biggest local issue?',enabled:true,options:['Roads and pavements','Crime and antisocial behaviour','Bins, litter and street cleaning','Local services','Parking and traffic']},
+          {id:'q-open',type:'text',label:'If you could change one thing locally, what would it be?',enabled:true,options:[]},
+          {id:'q-email',type:'yesno',label:'Would you like campaign updates by email?',enabled:true,options:['Yes','No']},
+          {id:'q-vi',type:'single',label:'If there were a council election tomorrow, which party would you be most likely to vote for?',enabled:false,options:['Conservative','Labour','Liberal Democrat','Reform UK','Green','Other','Undecided','Prefer not to say']}
+        ],
+        updatedAt:'2026-08-26T06:50:00'
+      },
+      'survey-bus':{
+        id:'survey-bus',
+        websiteId:'site-joe-bloggs',
+        campaignId:'campaign-bus',
+        name:'Bus services survey',
+        status:'Draft',
+        responses:3,
+        questions:[
+          {id:'q-bus-use',type:'single',label:'How often do you use the Bloggs Ward bus?',enabled:true,options:['Daily','A few times a week','Weekly','Occasionally','Never']},
+          {id:'q-bus-change',type:'text',label:'What would make the service better?',enabled:true,options:[]},
+          {id:'q-bus-email',type:'yesno',label:'Would you like updates on this campaign?',enabled:true,options:['Yes','No']}
+        ],
+        updatedAt:'2026-08-26T06:40:00'
+      }
+    },
+    graphics:{
+      'graphic-1':{
+        id:'graphic-1',
+        websiteId:'site-joe-bloggs',
+        campaignId:'campaign-bus',
+        type:'campaign',
+        title:'Save the Bloggs Ward bus',
+        format:'square',
+        status:'Saved',
+        savedAt:'2026-08-26T06:20:00'
+      }
+    },
+    people:{
+      'person-sarah':{id:'person-sarah',name:'Sarah Smith',postcode:'BG3 4XX',issue:'Roads',volunteer:true,source:'Facebook',external:{nationbuilder:'nb-1001'}},
+      'person-tom':{id:'person-tom',name:'Tom Williams',postcode:'BG1 2AB',issue:'Crime',volunteer:false,source:'Organic',external:{nationbuilder:'nb-1002'}},
+      'person-aisha':{id:'person-aisha',name:'Aisha Khan',postcode:'BG2 7PL',issue:'Services',volunteer:true,source:'Email',external:{nationbuilder:'nb-1003'}},
+      'person-david':{id:'person-david',name:'David Brown',postcode:'BG4 8HR',issue:'Roads',volunteer:false,source:'Direct',external:{nationbuilder:'nb-1004'}},
+      'person-emily':{id:'person-emily',name:'Emily Clarke',postcode:'BG5 1QT',issue:'Parking',volunteer:false,source:'Facebook',external:{nationbuilder:'nb-1005'}},
+      'person-michael':{id:'person-michael',name:'Michael Green',postcode:'BG3 9DA',issue:'Bus',volunteer:true,source:'Organic',external:{nationbuilder:'nb-1006'}},
+      'person-lucy':{id:'person-lucy',name:'Lucy Baker',postcode:'BG3 2PL',issue:'Roads',volunteer:true,source:'Facebook',external:{nationbuilder:'nb-1007'}},
+      'person-mark':{id:'person-mark',name:'Mark Evans',postcode:'BG2 1NN',issue:'Crime',volunteer:false,source:'Direct',external:{nationbuilder:'nb-1008'}},
+      'person-priya':{id:'person-priya',name:'Priya Patel',postcode:'BG1 6TR',issue:'Services',volunteer:true,source:'Email',external:{nationbuilder:'nb-1009'}},
+      'person-george':{id:'person-george',name:'George White',postcode:'BG4 3ST',issue:'Roads',volunteer:true,source:'Organic',external:{nationbuilder:'nb-1010'}}
+    },
+    actions:[
+      {id:'act-1',type:'campaign_back',personId:'person-sarah',campaignId:'campaign-bus',text:'Sarah Smith backed “Save the Bloggs Ward bus”',time:'2026-08-26T06:52:00'},
+      {id:'act-2',type:'survey',personId:'person-tom',surveyId:'survey-residents',text:'Tom Williams completed the residents survey',time:'2026-08-26T06:37:00'},
+      {id:'act-3',type:'volunteer',personId:'person-aisha',text:'Aisha Khan offered to deliver leaflets',time:'2026-08-26T06:19:00'},
+      {id:'act-4',type:'signup',personId:'person-david',text:'David Brown joined the campaign',time:'2026-08-26T05:58:00'}
+    ],
+    integrations:{
+      nationbuilder:{connected:true,label:'NationBuilder',syncedPeople:10,lastSync:'2026-08-26T06:55:00'},
+      votesource:{connected:false,label:'VoteSource'},
+      mailchimp:{connected:false,label:'Mailchimp'}
+    }
+  };
+
+  function load(){
+    try{
+      const raw=localStorage.getItem(KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    const copy=JSON.parse(JSON.stringify(seed));
+    localStorage.setItem(KEY,JSON.stringify(copy));
+    return copy;
+  }
+  function save(db){
+    localStorage.setItem(KEY,JSON.stringify(db));
+    window.dispatchEvent(new CustomEvent('cp:dbchange',{detail:db}));
+    return db;
+  }
+  function db(){return load()}
+  function uid(prefix){return prefix+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)}
+  function activeWebsite(){const d=db();return d.websites[d.activeWebsiteId]}
+  function setActiveWebsite(id){const d=db();if(d.websites[id]){d.activeWebsiteId=id;save(d)}}
+  function list(type,filter={}){
+    const d=db(),obj=d[type]||{};
+    return Object.values(obj).filter(x=>Object.entries(filter).every(([k,v])=>x[k]===v))
+  }
+  function get(type,id){return db()[type]?.[id]||null}
+  function put(type,item){
+    const d=db();d[type]=d[type]||{};d[type][item.id]=item;save(d);return item
+  }
+  function remove(type,id){
+    const d=db();if(d[type])delete d[type][id];
+    if(type==='surveys'){
+      Object.values(d.websites).forEach(w=>{if(w.surveyId===id)w.surveyId=null});
+      Object.values(d.campaigns).forEach(c=>{if(c.surveyId===id)c.surveyId=null});
+    }
+    save(d)
+  }
+  function duplicate(type,id){
+    const item=get(type,id);if(!item)return null;
+    const copy=JSON.parse(JSON.stringify(item));
+    copy.id=uid(type.slice(0,-1)||type);
+    copy.name=(copy.name||copy.title||'Item')+' copy';
+    if('status' in copy)copy.status='Draft';
+    copy.updatedAt=new Date().toISOString();
+    return put(type,copy)
+  }
+  function patch(type,id,changes){
+    const d=db();if(!d[type]?.[id])return null;
+    d[type][id]={...d[type][id],...changes,updatedAt:new Date().toISOString()};
+    save(d);return d[type][id]
+  }
+  function assignSurvey(targetType,targetId,surveyId){
+    const d=db();
+    if(!d.surveys[surveyId])return;
+    if(targetType==='website'&&d.websites[targetId])d.websites[targetId].surveyId=surveyId;
+    if(targetType==='campaign'&&d.campaigns[targetId])d.campaigns[targetId].surveyId=surveyId;
+    save(d)
+  }
+  function createSurvey(name){
+    const w=activeWebsite();
+    const item={id:uid('survey'),websiteId:w?.id||null,name,status:'Draft',responses:0,questions:[],updatedAt:new Date().toISOString()};
+    return put('surveys',item)
+  }
+  function createCampaign(name){
+    const w=activeWebsite();
+    const item={id:uid('campaign'),websiteId:w?.id||null,name,slug:String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''),status:'Draft',headline:name,support:'',points:['Key point one','Key point two','Key point three'],surveyId:w?.surveyId||null,supporterCount:0,updatedAt:new Date().toISOString()};
+    return put('campaigns',item)
+  }
+  function saveGraphic(g){
+    const w=activeWebsite();
+    const item={id:g.id||uid('graphic'),websiteId:w?.id||null,status:'Saved',savedAt:new Date().toISOString(),...g};
+    return put('graphics',item)
+  }
+  return {db,save,uid,activeWebsite,setActiveWebsite,list,get,put,patch,remove,duplicate,assignSurvey,createSurvey,createCampaign,saveGraphic};
+})();
+
+
 document.querySelectorAll('[data-demo-login]').forEach(form=>{
   form.addEventListener('submit',e=>{e.preventDefault();localStorage.setItem('cpLoggedIn','yes');location.href='dashboard.html'});
 });
@@ -695,4 +887,129 @@ function cpSelectedSurvey(){
   document.querySelectorAll('[data-add-q]').forEach(b=>b.onclick=()=>{const t=b.dataset.addQ,labels={text:'Your question',single:'Choose one option',multi:'Choose any that apply',yesno:'Yes or no?',rating:'How would you rate this?',postcode:'What is your postcode?',phone:'What is your phone number?'};q.push({id:'q'+Date.now(),type:t,label:labels[t],enabled:true,options:['Option 1','Option 2','Option 3']});saveCurrent();renderBuilder()});
   document.querySelectorAll('.survey-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.survey-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.survey-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.tab==='questions'?'surveyQuestionsPanel':'surveyResultsPanel').classList.add('active')});
   renderLibrary()
+})();
+
+
+/* =========================================================
+   STAGE 1 UI — all libraries/readouts use CP shared store
+   ========================================================= */
+(function cpDashboard(){
+  if(!document.getElementById('dashSupporters'))return;
+  const d=CP.db(), campaigns=Object.values(d.campaigns), surveys=Object.values(d.surveys), people=Object.values(d.people), graphics=Object.values(d.graphics);
+  document.getElementById('dashSupporters').textContent=people.length;
+  document.getElementById('dashCampaignBackers').textContent=campaigns.reduce((n,c)=>n+(c.supporterCount||0),0);
+  document.getElementById('dashSurveyResponses').textContent=surveys.reduce((n,s)=>n+(s.responses||0),0);
+  document.getElementById('dashVolunteers').textContent=people.filter(p=>p.volunteer).length;
+  document.getElementById('dashCampaignList').innerHTML=campaigns.map(c=>`<div class="campaign-row"><div><strong>${c.name}</strong><small>${c.supporterCount||0} supporters · ${c.status}${c.surveyId?' · Survey linked':''}</small></div><div class="mini-actions"><a class="btn secondary small" href="campaign-editor.html?id=${c.id}">Edit</a><a class="link-arrow" href="campaigns.html">→</a></div></div>`).join('');
+  const w=d.websites[d.activeWebsiteId];
+  document.getElementById('dashWebsiteStatus').innerHTML=w?`<span class="status-chip published">${w.status}</span><h3>${w.domain||w.name}</h3><p class="muted">${w.surveyId?'Survey: '+(d.surveys[w.surveyId]?.name||'Assigned'):'No survey assigned'}</p><a class="btn secondary small" href="editor.html?site=joe-bloggs">Edit site</a>`:'';
+  document.getElementById('dashRecentActivity').innerHTML=(d.actions||[]).slice(0,5).map(a=>`<div class="compact-activity"><div><strong>${a.text}</strong><small>${new Date(a.time).toLocaleString()}</small></div></div>`).join('');
+  document.getElementById('dashSurveyList').innerHTML=surveys.map(s=>`<div class="survey-row"><div><strong>${s.name}</strong><small>${s.responses||0} responses · ${s.status}</small></div><a class="link-arrow" href="surveys.html?edit=${s.id}">→</a></div>`).join('');
+  document.getElementById('dashCreativeSummary').innerHTML=`<strong style="font-size:28px">${graphics.length}</strong><p class="muted">saved graphic${graphics.length===1?'':'s'} across your campaign.</p>`;
+  const nb=d.integrations?.nationbuilder;
+  document.getElementById('dashIntegrationSummary').innerHTML=nb?.connected?`<span class="sync-status"><span class="dot"></span> NationBuilder connected</span><p class="muted">${nb.syncedPeople||0} people synced.</p>`:'<p class="muted">No external CRM connected.</p>';
+})();
+
+(function cpSurveyLibraryUI(){
+  const grid=document.getElementById('surveyLibraryGrid');if(!grid)return;
+  const libraryView=document.getElementById('surveyLibraryView'),editorView=document.getElementById('surveyEditorView');
+  let currentId=null, working=[];
+  function renderLibrary(){
+    const d=CP.db(), surveys=Object.values(d.surveys), active=d.websites[d.activeWebsiteId];
+    grid.innerHTML=surveys.map(s=>{
+      const websiteSelected=active?.surveyId===s.id;
+      const campaignUses=Object.values(d.campaigns).filter(c=>c.surveyId===s.id);
+      return `<article class="survey-library-card"><span class="status-chip ${s.status==='Published'?'published':'draft'}">${s.status}</span><h3>${s.name}</h3><div class="survey-meta"><span>${s.questions.filter(q=>q.enabled).length} active questions</span><span>${s.responses||0} responses</span></div>${websiteSelected?'<span class="sync-badge">Used on website</span>':''}${campaignUses.length?`<p class="assignment-note">Used by: ${campaignUses.map(c=>c.name).join(', ')}</p>`:''}<div class="library-card-actions"><button class="btn small" data-edit="${s.id}">Edit</button><button class="btn secondary small" data-use="${s.id}">${websiteSelected?'Selected':'Use on website'}</button><button class="btn secondary small" data-dup="${s.id}">Duplicate</button><button class="btn secondary small" data-del="${s.id}">Delete</button></div></article>`
+    }).join('');
+    grid.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openSurvey(b.dataset.edit));
+    grid.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{CP.assignSurvey('website',CP.db().activeWebsiteId,b.dataset.use);renderLibrary()});
+    grid.querySelectorAll('[data-dup]').forEach(b=>b.onclick=()=>{CP.duplicate('surveys',b.dataset.dup);renderLibrary()});
+    grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(confirm('Delete this survey?')){CP.remove('surveys',b.dataset.del);renderLibrary()}})
+  }
+  function openSurvey(id){
+    const s=CP.get('surveys',id);if(!s)return;
+    currentId=id;working=JSON.parse(JSON.stringify(s.questions||[]));
+    libraryView.style.display='none';editorView.style.display='block';
+    document.getElementById('surveyEditorName').textContent=s.name;
+    renderBuilder()
+  }
+  function previewQ(x){
+    if(x.type==='text')return `<div class="preview-question"><label>${x.label}</label><textarea></textarea></div>`;
+    if(x.type==='single')return `<div class="preview-question"><label>${x.label}</label><select><option>Select</option>${(x.options||[]).map(o=>`<option>${o}</option>`).join('')}</select></div>`;
+    if(x.type==='multi')return `<div class="preview-question"><label>${x.label}</label>${(x.options||[]).map(o=>`<label><input type="checkbox"> ${o}</label>`).join('')}</div>`;
+    if(x.type==='yesno')return `<div class="preview-question"><label>${x.label}</label><div class="yesno"><span>Yes</span><span>No</span></div></div>`;
+    if(x.type==='rating')return `<div class="preview-question"><label>${x.label}</label><div class="rating-row">${[1,2,3,4,5].map(n=>`<span>${n}</span>`).join('')}</div></div>`;
+    return `<div class="preview-question"><label>${x.label}</label><input></div>`;
+  }
+  function persist(){CP.patch('surveys',currentId,{questions:working})}
+  function renderBuilder(){
+    const builder=document.getElementById('questionBuilder'),preview=document.getElementById('surveyBuilderPreview');
+    builder.innerHTML=working.map((q,i)=>`<div class="question-card" data-i="${i}"><div class="question-card-head"><div><span class="question-type">${q.type}</span><strong style="display:block">${q.label}</strong></div><div class="question-controls"><button class="up">↑</button><button class="down">↓</button><button class="dup">Duplicate</button><button class="del">Remove</button></div></div><div class="question-grid"><label class="field"><span>Question</span><input class="label" value="${q.label.replace(/"/g,'&quot;')}"></label><label class="question-visibility"><input class="enabled" type="checkbox" ${q.enabled?'checked':''}> Show on website</label></div>${['single','multi'].includes(q.type)?`<label class="field question-options"><span>Options — one per line</span><textarea class="options">${(q.options||[]).join('\n')}</textarea></label>`:''}</div>`).join('');
+    preview.innerHTML=working.filter(q=>q.enabled).map(previewQ).join('')||'<p class="muted">No questions enabled.</p>';
+    builder.querySelectorAll('.question-card').forEach(card=>{
+      const i=+card.dataset.i;
+      card.querySelector('.label').onchange=e=>{working[i].label=e.target.value;persist();renderBuilder()};
+      card.querySelector('.enabled').onchange=e=>{working[i].enabled=e.target.checked;persist();renderBuilder()};
+      const opt=card.querySelector('.options');if(opt)opt.onchange=e=>{working[i].options=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);persist();renderBuilder()};
+      card.querySelector('.del').onclick=()=>{working.splice(i,1);persist();renderBuilder()};
+      card.querySelector('.dup').onclick=()=>{working.splice(i+1,0,{...JSON.parse(JSON.stringify(working[i])),id:CP.uid('q')});persist();renderBuilder()};
+      card.querySelector('.up').onclick=()=>{if(i>0){[working[i-1],working[i]]=[working[i],working[i-1]];persist();renderBuilder()}};
+      card.querySelector('.down').onclick=()=>{if(i<working.length-1){[working[i+1],working[i]]=[working[i],working[i+1]];persist();renderBuilder()}}
+    })
+  }
+  document.getElementById('newSurveyBtn').onclick=()=>{const name=prompt('Survey name','New survey');if(!name)return;const s=CP.createSurvey(name);renderLibrary();openSurvey(s.id)};
+  document.getElementById('backToSurveyLibrary').onclick=()=>{editorView.style.display='none';libraryView.style.display='block';renderLibrary()};
+  document.getElementById('saveSurveyBtn').onclick=()=>{CP.patch('surveys',currentId,{questions:working,status:'Published'});const b=document.getElementById('saveSurveyBtn');b.textContent='Saved';setTimeout(()=>b.textContent='Save survey',800)};
+  document.getElementById('duplicateSurveyBtn').onclick=()=>{const copy=CP.duplicate('surveys',currentId);editorView.style.display='none';libraryView.style.display='block';renderLibrary();if(copy)setTimeout(()=>openSurvey(copy.id),50)};
+  document.querySelectorAll('[data-add-q]').forEach(b=>b.onclick=()=>{const type=b.dataset.addQ,labels={text:'Your question',single:'Choose one option',multi:'Choose any that apply',yesno:'Yes or no?',rating:'How would you rate this?',postcode:'What is your postcode?',phone:'What is your phone number?'};working.push({id:CP.uid('q'),type,label:labels[type],enabled:true,options:['Option 1','Option 2','Option 3']});persist();renderBuilder()});
+  document.querySelectorAll('.survey-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.survey-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.survey-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.tab==='questions'?'surveyQuestionsPanel':'surveyResultsPanel').classList.add('active');if(b.dataset.tab==='results'){const s=CP.get('surveys',currentId);document.getElementById('surveyResultsSummary').innerHTML=`<div class="kpi-grid"><div class="card kpi"><strong>${s.responses||0}</strong><span>Responses</span></div></div>`}});
+  renderLibrary();
+  const editParam=new URLSearchParams(location.search).get('edit');if(editParam)setTimeout(()=>openSurvey(editParam),30)
+})();
+
+(function cpCampaignLibrary(){
+  const grid=document.getElementById('campaignLibraryGrid');if(!grid)return;
+  function render(){
+    const d=CP.db(), campaigns=Object.values(d.campaigns);
+    grid.innerHTML=campaigns.map(c=>`<article class="campaign-card"><div class="campaign-preview"></div><span class="status-chip ${c.status==='Published'?'published':'draft'}">${c.status}</span><h3>${c.name}</h3><p class="muted">${c.supporterCount||0} supporters${c.surveyId?' · '+(d.surveys[c.surveyId]?.name||'Survey linked'):''}</p><div class="library-card-actions"><a class="btn small" href="campaign-editor.html?id=${c.id}">Edit</a><button class="btn secondary small" data-dup="${c.id}">Duplicate</button><button class="btn secondary small" data-del="${c.id}">Delete</button><a class="btn secondary small" href="creative-editor.html?template=campaign&campaign=${c.id}">Create graphic</a></div></article>`).join('');
+    grid.querySelectorAll('[data-dup]').forEach(b=>b.onclick=()=>{CP.duplicate('campaigns',b.dataset.dup);render()});
+    grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(confirm('Delete this campaign?')){CP.remove('campaigns',b.dataset.del);render()}})
+  }
+  document.getElementById('newCampaignBtn').onclick=()=>{const name=prompt('Campaign name','New campaign');if(!name)return;const c=CP.createCampaign(name);location.href='campaign-editor.html?id='+c.id};
+  render()
+})();
+
+(function cpCreativeLibrary(){
+  const grid=document.getElementById('sharedGraphicLibrary');if(!grid)return;
+  const graphics=CP.list('graphics');
+  grid.innerHTML=graphics.length?graphics.map(g=>`<article class="saved-graphic-card"><div class="saved-graphic-thumb"></div><div class="saved-graphic-card-body"><h4>${g.title||'Campaign graphic'}</h4><small>${g.format||'square'}${g.campaignId?' · linked to campaign':''}</small><div class="library-card-actions"><a class="btn secondary small" href="creative-editor.html?template=${g.type||'announcement'}&saved=${g.id}">Edit again</a><button class="btn secondary small" data-del="${g.id}">Delete</button></div></div></article>`).join(''):'<div class="empty-state-card"><h3>No saved graphics yet</h3><p>Create a graphic and save it to keep it here.</p></div>';
+  grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{CP.remove('graphics',b.dataset.del);location.reload()})
+})();
+
+/* Website editor: survey assignment from the shared store */
+(function cpWebsiteSurveyPicker(){
+  const frame=document.getElementById('visualFrame');if(!frame)return;
+  const observer=new MutationObserver(()=>{
+    const drawer=document.getElementById('drawerBody');if(!drawer)return;
+    const title=document.getElementById('drawerTitle')?.textContent?.toLowerCase()||'';
+    if(title.includes('survey') && !document.getElementById('cpSharedSurveyPicker')){
+      const d=CP.db(),w=d.websites[d.activeWebsiteId],surveys=Object.values(d.surveys);
+      drawer.insertAdjacentHTML('afterbegin',`<label class="field survey-picker"><span>Survey shown on website</span><select id="cpSharedSurveyPicker">${surveys.map(s=>`<option value="${s.id}" ${w?.surveyId===s.id?'selected':''}>${s.name}</option>`).join('')}</select></label><p class="muted">Manage surveys from the Surveys section.</p>`);
+      document.getElementById('cpSharedSurveyPicker').onchange=e=>{CP.assignSurvey('website',d.activeWebsiteId,e.target.value);window.dispatchEvent(new Event('focus'))}
+    }
+  });
+  const drawer=document.getElementById('drawerBody');if(drawer)observer.observe(drawer,{childList:true,subtree:true})
+})();
+
+/* Creative save -> shared store */
+(function cpCreativeSave(){
+  const btn=document.getElementById('creativeSaveGraphic');if(!btn)return;
+  btn.addEventListener('click',()=>{
+    const params=new URLSearchParams(location.search);
+    const campaignId=params.get('campaign')||null;
+    const type=params.get('template')||'announcement';
+    const title=document.getElementById('creativeTitle')?.textContent||'Campaign graphic';
+    const format=document.getElementById('creativeCanvas')?.className.split(' ').pop()||'square';
+    CP.saveGraphic({campaignId,type,title,format});
+  },true)
 })();

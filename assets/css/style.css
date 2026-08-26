@@ -639,3 +639,14 @@ table{width:100%;border-collapse:collapse;min-width:850px}th,td{text-align:left;
 .survey-picker{margin-top:10px}
 @media(max-width:1000px){.creative-history-grid{grid-template-columns:repeat(2,1fr)}.survey-library-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.creative-history-grid,.survey-library-grid{grid-template-columns:1fr}}
+
+.campaign-kpis .kpi{display:block;text-decoration:none}
+.campaign-row,.survey-row,.compact-activity{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid #edf1f5}
+.campaign-row:last-child,.survey-row:last-child,.compact-activity:last-child{border-bottom:0}
+.campaign-row strong,.survey-row strong,.compact-activity strong{display:block}
+.campaign-row small,.survey-row small,.compact-activity small{color:var(--muted)}
+.mini-actions{display:flex;gap:6px;align-items:center}
+.link-arrow{color:var(--blue);font-weight:900}
+.library-toolbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap}
+.library-card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.assignment-note{font-size:11px;color:var(--muted);margin-top:6px}
