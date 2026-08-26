@@ -9,29 +9,17 @@
     try{const r=await fetch('https://api.postcodes.io/postcodes/'+encodeURIComponent(pc));if(!r.ok)return {};const j=await r.json(),x=j.result||{},codes=x.codes||{};return {ward:x.admin_ward||'',ward_code:codes.admin_ward||'',local_authority:x.admin_district||'',local_authority_code:codes.admin_district||'',parliamentary_constituency:x.parliamentary_constituency||'',parliamentary_constituency_code:codes.parliamentary_constituency||'',region:x.region||'',nation:x.country||'',latitude:x.latitude,longitude:x.longitude}}catch(_){return {}}
   }
 
-  const wanted=new URLSearchParams(location.search).get('site')||localStorage.getItem('cpCurrentSiteShared')||localStorage.getItem('cpCurrentSite');
-  let q=sb.from('websites').select('*');
-  if(wanted){
-    if(/^[0-9a-f-]{36}$/i.test(wanted)) q=q.eq('id',wanted);
-    else q=q.eq('slug',wanted);
-  }
-  const siteR=wanted?await q.maybeSingle():await q.order('created_at').limit(1).maybeSingle();
-  if(siteR.error){fail(siteR.error.message);return}
-  const w=siteR.data;
-  if(!w){fail('This campaign website is not published yet.');return}
-
-  let survey=null,questions=[];
-  if(w.selected_survey_id){
-    const [sr,qr]=await Promise.all([
-      sb.from('surveys').select('*').eq('id',w.selected_survey_id).maybeSingle(),
-      sb.from('survey_questions').select('*').eq('survey_id',w.selected_survey_id).order('position')
-    ]);
-    if(!sr.error)survey=sr.data;
-    if(!qr.error)questions=qr.data||[];
-  }
-  const campaignsR=await sb.from('campaigns').select('*').eq('website_id',w.id).order('created_at');
-  const campaigns=campaignsR.error?[]:(campaignsR.data||[]);
-  const currentCampaign=campaigns[0]||null;
+  const pathParts=location.pathname.split('/').filter(Boolean);
+  const sitePathIndex=pathParts.lastIndexOf('site');
+  const pathSlug=sitePathIndex>=0?pathParts[sitePathIndex+1]:'';
+  const wanted=new URLSearchParams(location.search).get('site')||pathSlug||localStorage.getItem('cpCurrentSiteShared')||localStorage.getItem('cpCurrentSite');
+  if(!wanted){fail('This campaign website is not available.');return}
+  const depR=await sb.rpc('public_resolve_deployment',{p_entity_type:'website',p_identifier:wanted,p_hostname:location.hostname});
+  if(depR.error){fail('This campaign website is not available.');return}
+  const deployment=depR.data,snapshot=deployment?.snapshot||{},w=snapshot.website;
+  if(!w){fail('This campaign website is not published.');return}
+  const survey=snapshot.survey||null,questions=snapshot.questions||[];
+  const currentCampaign=null;
   if(window.CPAttribution) await window.CPAttribution.track({websiteId:w.id});
   const attributionContext=()=>window.CPAttribution?window.CPAttribution.context():{session_id:null,attribution:{},source:'website'};
 

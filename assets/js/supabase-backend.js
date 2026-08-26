@@ -862,16 +862,7 @@
     }
 
     document.getElementById('campaignMicrositeDrawerClose').onclick=()=>workspace.classList.remove('drawer-open');
-    document.getElementById('campaignMicrositePublish').onclick=async()=>{
-      saving();
-      const snap=await sb.from('publish_versions').insert({
-        account_id:d.account.id,entity_type:'campaign',entity_id:campaign.id,label:'Published version',
-        snapshot:{...campaign}
-      });
-      if(snap.error){showBackendError('Could not create publish version: '+snap.error.message);saved();return}
-      await persist({status:'Published'});
-      document.getElementById('campaignMicrositeMeta').textContent=`Published · ${website?.name||'Website'} · ${campaign.slug||''}`
-    };
+    document.getElementById('campaignMicrositePublish').onclick=async()=>{saving();const r=await sb.rpc('publish_local_entity',{p_entity_type:'campaign',p_entity_id:campaign.id});if(r.error){showBackendError('Could not publish: '+r.error.message);saved();return}campaign.status='Published';campaign.has_unpublished_changes=false;saved();document.getElementById('campaignMicrositeMeta').textContent=`Live · version ${r.data?.version||''} · ${campaign.slug||''}`};
     document.getElementById('campaignMicrositePreview').onclick=()=>{
       const win=window.open('','_blank');if(!win)return;
       win.document.open();win.document.write(campaignHTML());win.document.close()

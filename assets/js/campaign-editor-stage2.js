@@ -94,6 +94,6 @@
   document.querySelectorAll('[data-width]').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('[data-width]').forEach(x=>x.classList.remove('active'));btn.classList.add('active');device.className='campaign-device '+btn.dataset.width});
   cmBrandButton.onclick=()=>openPanel('brand');
   cmPreviewButton.onclick=()=>{const w=window.open('','_blank');if(!w)return;w.document.open();w.document.write(previewHTML());w.document.close()};
-  cmPublishButton.onclick=async()=>{saving();const aid=await accountId();const vr=await sb.from('publish_versions').insert({account_id:aid,entity_type:'campaign',entity_id:campaign.id,label:'Published version',snapshot:campaign});if(vr.error){fail('Could not publish: '+vr.error.message);return}const pub=await sb.from('campaigns').update({status:'published',published_at:new Date().toISOString(),has_unpublished_changes:false}).eq('id',campaign.id);if(pub.error){fail('Could not publish: '+pub.error.message);return}campaign.status='published';campaign.has_unpublished_changes=false;saved();cmPublishButton.textContent='Published'};
+  cmPublishButton.onclick=async()=>{saving();const r=await sb.rpc('publish_local_entity',{p_entity_type:'campaign',p_entity_id:campaign.id});if(r.error){fail('Could not publish: '+r.error.message);saved();return}campaign.status='published';campaign.has_unpublished_changes=false;saved();cmPublishButton.textContent='Published · v'+(r.data?.version||'');};
   if(await load())render()
 })();

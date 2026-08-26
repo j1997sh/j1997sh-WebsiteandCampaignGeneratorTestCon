@@ -118,7 +118,7 @@
   }
   document.querySelectorAll('[data-we-width]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-we-width]').forEach(x=>x.classList.remove('active'));b.classList.add('active');device.className='website-device '+b.dataset.weWidth});
   wePreviewButton.onclick=()=>{const w=window.open('','_blank');if(!w)return;w.document.open();w.document.write(previewHTML());w.document.close()};
-  wePublishButton.onclick=async()=>{saving();const a=await account(),vr=await sb.from('publish_versions').insert({account_id:a.id,entity_type:'website',entity_id:website.id,label:'Published version',snapshot:website});if(vr.error){fail('Could not publish: '+vr.error.message);return}const pub=await sb.from('websites').update({status:'published',published_at:new Date().toISOString(),has_unpublished_changes:false}).eq('id',website.id);if(pub.error){fail('Could not publish: '+pub.error.message);return}website.status='published';website.has_unpublished_changes=false;saved();wePublishButton.textContent='Published'};
+  wePublishButton.onclick=async()=>{saving();const r=await sb.rpc('publish_local_entity',{p_entity_type:'website',p_entity_id:website.id});if(r.error){fail('Could not publish: '+r.error.message);saved();return}website.status='published';website.has_unpublished_changes=false;saved();wePublishButton.textContent='Published · v'+(r.data?.version||'');};
   websiteEditorLogout.onclick=async e=>{e.preventDefault();await sb.auth.signOut();location.href='login.html'};
   if(await load())render()
 })();
