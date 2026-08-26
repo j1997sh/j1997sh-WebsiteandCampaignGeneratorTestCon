@@ -4,6 +4,10 @@
   const root=document.getElementById('publicSiteRoot');
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   function fail(msg){root.innerHTML=`<div class="public-state"><h1>Site unavailable</h1><p>${esc(msg)}</p></div>`}
+  async function resolvePostcode(postcode){
+    const pc=String(postcode||'').trim();if(!pc)return {};
+    try{const r=await fetch('https://api.postcodes.io/postcodes/'+encodeURIComponent(pc));if(!r.ok)return {};const j=await r.json(),x=j.result||{},codes=x.codes||{};return {ward:x.admin_ward||'',ward_code:codes.admin_ward||'',local_authority:x.admin_district||'',local_authority_code:codes.admin_district||'',parliamentary_constituency:x.parliamentary_constituency||'',parliamentary_constituency_code:codes.parliamentary_constituency||'',region:x.region||'',nation:x.country||'',latitude:x.latitude,longitude:x.longitude}}catch(_){return {}}
+  }
 
   const wanted=new URLSearchParams(location.search).get('site')||localStorage.getItem('cpCurrentSiteShared')||localStorage.getItem('cpCurrentSite');
   let q=sb.from('websites').select('*');
@@ -63,9 +67,9 @@
     <section class="pub-hero"><div class="pub-container"><div><h1>${esc(hero)}</h1><p>${esc(heroCopy)}</p>${survey?'<a class="pub-btn" href="#survey">Tell us what matters</a>':''}</div></div></section>
     <section class="pub-section" id="about"><div class="pub-container"><h2>${esc(aboutHeadline)}</h2><p class="pub-lead">${esc(aboutLead)}</p>${flat?.aboutCopy?`<p>${esc(flat.aboutCopy)}</p>`:''}</div></section>
     <section class="pub-section alt" id="priorities"><div class="pub-container"><h2>${esc(first)}’s priorities</h2><div class="pub-grid">${priorities.map(p=>`<article><h3>${esc(p.title)}</h3><p>${esc(p.copy||'')}</p></article>`).join('')}</div></div></section>
-    ${survey?`<section class="pub-section" id="survey"><div class="pub-container"><h2>${esc(survey.name)}</h2><p class="pub-lead">Tell ${esc(first)} what matters most locally.</p><form class="pub-form"><div class="two"><input name="first_name" placeholder="First name"><input name="last_name" placeholder="Last name"><input class="full" name="email" type="email" placeholder="Email address"><input class="full" name="postcode" placeholder="Postcode"></div>${questions.filter(q=>q.enabled).map(question).join('')}<button class="pub-btn" type="submit">Send my views</button><p class="form-note">Your information will be stored securely by the campaign.</p></form></div></section>`:''}
-    ${currentCampaign?`<section class="pub-section alt" id="campaign"><div class="pub-container"><h2>${esc(campaignTitle)}</h2><p class="pub-lead">${esc(campaignCopy)}</p><form class="pub-action-form" data-action="campaign_back"><div class="two"><input name="first_name" placeholder="First name"><input name="last_name" placeholder="Last name"><input class="full" name="email" type="email" placeholder="Email address"><input class="full" name="postcode" placeholder="Postcode"></div><button class="pub-btn" type="submit">Back the campaign</button></form></div></section>`:''}
-    ${(flat?.volunteerHeadline||c.volunteer?.enabled)?`<section class="pub-section" id="volunteer"><div class="pub-container"><h2>${esc(flat?.volunteerHeadline||'Help locally')}</h2><p class="pub-lead">There are lots of ways to help the campaign locally.</p><form class="pub-action-form" data-action="volunteer"><div class="two"><input name="first_name" placeholder="First name"><input name="last_name" placeholder="Last name"><input class="full" name="email" type="email" placeholder="Email address"><input class="full" name="postcode" placeholder="Postcode"></div><select name="volunteer_type"><option value="">How would you like to help?</option><option>Leaflets</option><option>Doorstep</option><option>Poster</option><option>Online</option></select><button class="pub-btn" type="submit">I can help</button></form></div></section>`:''}
+    ${survey?`<section class="pub-section" id="survey"><div class="pub-container"><h2>${esc(survey.name)}</h2><p class="pub-lead">Tell ${esc(first)} what matters most locally.</p><form class="pub-form"><div class="two"><input name="first_name" placeholder="First name"><input name="last_name" placeholder="Last name"><input class="full" name="email" type="email" placeholder="Email address"><input class="full" name="address_line1" placeholder="House number and street" required><input class="full" name="address_line2" placeholder="Address line 2"><input name="town_city" placeholder="Town / city" required><input name="postcode" placeholder="Postcode" required></div>${questions.filter(q=>q.enabled).map(question).join('')}<button class="pub-btn" type="submit">Send my views</button><p class="form-note">Your information will be stored securely by the campaign.</p></form></div></section>`:''}
+    ${currentCampaign?`<section class="pub-section alt" id="campaign"><div class="pub-container"><h2>${esc(campaignTitle)}</h2><p class="pub-lead">${esc(campaignCopy)}</p><form class="pub-action-form" data-action="campaign_back"><div class="two"><input name="first_name" placeholder="First name"><input name="last_name" placeholder="Last name"><input class="full" name="email" type="email" placeholder="Email address"><input class="full" name="address_line1" placeholder="House number and street" required><input class="full" name="address_line2" placeholder="Address line 2"><input name="town_city" placeholder="Town / city" required><input name="postcode" placeholder="Postcode" required></div><button class="pub-btn" type="submit">Back the campaign</button></form></div></section>`:''}
+    ${(flat?.volunteerHeadline||c.volunteer?.enabled)?`<section class="pub-section" id="volunteer"><div class="pub-container"><h2>${esc(flat?.volunteerHeadline||'Help locally')}</h2><p class="pub-lead">There are lots of ways to help the campaign locally.</p><form class="pub-action-form" data-action="volunteer"><div class="two"><input name="first_name" placeholder="First name"><input name="last_name" placeholder="Last name"><input class="full" name="email" type="email" placeholder="Email address"><input class="full" name="address_line1" placeholder="House number and street" required><input class="full" name="address_line2" placeholder="Address line 2"><input name="town_city" placeholder="Town / city" required><input name="postcode" placeholder="Postcode" required></div><select name="volunteer_type"><option value="">How would you like to help?</option><option>Leaflets</option><option>Doorstep</option><option>Poster</option><option>Online</option></select><button class="pub-btn" type="submit">I can help</button></form></div></section>`:''}
   </main>
   <footer class="pub-footer"><div class="pub-container"><strong>${esc(name)}</strong><small>Candidate for ${esc(area)}</small></div></footer>`;
 
@@ -81,11 +85,14 @@
         if(q.question_type==='multi') answers[q.id]=fd.getAll(q.id);
         else answers[q.id]=fd.get(q.id)||'';
       });
-      const {error}=await sb.rpc('public_submit_survey',{
+      const geography=await resolvePostcode(fd.get('postcode'));
+      const {error}=await sb.rpc('public_submit_survey_geo',{
         p_website_id:w.id,p_survey_id:survey.id,p_campaign_id:currentCampaign?.id||null,
         p_first_name:fd.get('first_name')||null,p_last_name:fd.get('last_name')||null,
         p_email:fd.get('email')||null,p_postcode:fd.get('postcode')||null,p_phone:null,
-        p_source:new URLSearchParams(location.search).get('source')||'website',p_answers:answers
+        p_source:new URLSearchParams(location.search).get('source')||'website',p_answers:answers,
+        p_address:{line1:fd.get('address_line1')||'',line2:fd.get('address_line2')||'',town_city:fd.get('town_city')||''},
+        p_geography:geography
       });
       const msg=document.createElement('div');msg.className='submit-message '+(error?'error':'success');
       msg.textContent=error?'We could not submit your response. Please try again.':'Thank you — your views have been recorded.';
@@ -105,11 +112,14 @@
       const fd=new FormData(actionForm),action=actionForm.dataset.action;
       const payload={};
       if(action==='volunteer')payload.volunteer_type=fd.get('volunteer_type')||'General';
-      const {error}=await sb.rpc('public_capture_action',{
+      const geography=await resolvePostcode(fd.get('postcode'));
+      const {error}=await sb.rpc('public_capture_action_geo',{
         p_website_id:w.id,p_campaign_id:currentCampaign?.id||null,p_action_type:action,
         p_first_name:fd.get('first_name')||null,p_last_name:fd.get('last_name')||null,
         p_email:fd.get('email')||null,p_postcode:fd.get('postcode')||null,p_phone:null,
-        p_source:new URLSearchParams(location.search).get('source')||'website',p_payload:payload
+        p_source:new URLSearchParams(location.search).get('source')||'website',p_payload:payload,
+        p_address:{line1:fd.get('address_line1')||'',line2:fd.get('address_line2')||'',town_city:fd.get('town_city')||''},
+        p_geography:geography
       });
       const msg=document.createElement('div');msg.className='submit-message '+(error?'error':'success');
       msg.textContent=error?'We could not save that just now. Please try again.':(action==='volunteer'?'Thank you — the campaign has your offer to help.':'Thank you — your support has been recorded.');
