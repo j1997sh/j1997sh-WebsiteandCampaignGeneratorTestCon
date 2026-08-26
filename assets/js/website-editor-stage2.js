@@ -67,6 +67,11 @@
     website.content=normalise();
     const [sr,qr,acc]=await Promise.all([sb.from('surveys').select('*').order('created_at'),sb.from('survey_questions').select('*').order('position'),account()]);
     surveys=sr.data||[];surveyQuestions=qr.data||[];
+    const surveyToolbar=document.getElementById('weSurveyToolbar');
+    if(surveyToolbar){
+      surveyToolbar.innerHTML='<option value="">No survey</option>'+surveys.map(s=>`<option value="${s.id}" ${s.id===website.selected_survey_id?'selected':''}>${esc(s.name)}</option>`).join('');
+      surveyToolbar.onchange=()=>save({selected_survey_id:surveyToolbar.value||null});
+    }
     imageUrls.hero=await signed(website.hero_image_path);imageUrls.about=await signed(website.about_image_path);
     weTopTitle.textContent=website.name;
     const back=document.getElementById('weBackLink'); if(back) back.href='website-overview.html?id='+website.id;
