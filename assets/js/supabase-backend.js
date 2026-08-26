@@ -277,6 +277,115 @@
     if(error)throw error;return data.signedUrl;
   };
 
+
+  // -------------------------------------------------------
+  // Transactional create flows — persist before navigation
+  // -------------------------------------------------------
+  window.CPStage2.createWebsiteRemote=async(name,area='',surveyId=null)=>{
+    const aid=await accountId();
+    const id=crypto.randomUUID();
+    const payload={
+      id,account_id:aid,name,area:area||null,site_type:'councillor_lite',status:'draft',
+      domain:null,slug:String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''),
+      selected_survey_id:surveyId||null,
+      branding:{primary:'#08254a',secondary:'#1476d4',text:'#ffffff'},
+      content:{}
+    };
+    const {data,error}=await sb.from('websites').insert(payload).select('*').single();
+    if(error)throw error;
+    return data;
+  };
+
+  window.CPStage2.createSurveyRemote=async(name,websiteId)=>{
+    const aid=await accountId();
+    const id=crypto.randomUUID();
+    const {data,error}=await sb.from('surveys').insert({
+      id,account_id:aid,website_id:websiteId||null,name,status:'draft',
+      settings:{submit_label:'Send my views',collect_email:true},response_count:0
+    }).select('*').single();
+    if(error)throw error;
+    return data;
+  };
+
+  window.CPStage2.createCampaignRemote=async(name,websiteId,surveyId=null)=>{
+    const aid=await accountId();
+    const id=crypto.randomUUID();
+    const slug=String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    const {data,error}=await sb.from('campaigns').insert({
+      id,account_id:aid,website_id:websiteId,survey_id:surveyId||null,name,slug,status:'draft',
+      headline:name,supporting_copy:'',key_points:['Key point one','Key point two','Key point three'],
+      settings:{},supporter_count:0
+    }).select('*').single();
+    if(error)throw error;
+    return data;
+  };
+
+  function setCreateBusy(button,label='Creating…'){
+    if(!button)return()=>{};
+    const old=button.textContent;button.disabled=true;button.textContent=label;
+    return()=>{button.disabled=false;button.textContent=old};
+  }
+
+  function bindTransactionalCreates(){
+    // Website create wizard.
+    const wc=document.getElementById('wcCreate');
+    if(wc){
+      wc.onclick=async()=>{
+        const done=setCreateBusy(wc);
+        try{
+          const name=document.getElementById('wcName')?.value.trim();
+          const area=document.getElementById('wcArea')?.value.trim()||'';
+          const surveyId=document.getElementById('wcSurvey')?.value||null;
+          if(!name){done();return}
+          const row=await window.CPStage2.createWebsiteRemote(name,area,surveyId);
+          sessionStorage.clear();
+          location.href='website-overview.html?id='+encodeURIComponent(row.id);
+        }catch(err){done();showBackendError('Could not create website: '+err.message)}
+      };
+    }
+
+    // Campaign + Survey guided create wizard.
+    const confirm=document.getElementById('createConfirm');
+    const flow=document.querySelector('[data-create-kind]');
+    if(confirm&&flow){
+      confirm.onclick=async()=>{
+        const done=setCreateBusy(confirm);
+        try{
+          const kind=flow.dataset.createKind;
+          const name=document.getElementById('createName')?.value.trim();
+          const websiteId=document.getElementById('createWebsite')?.value;
+          const surveyId=document.getElementById('createSurvey')?.value||null;
+          if(!name||!websiteId){done();return}
+          if(kind==='campaign'){
+            const row=await window.CPStage2.createCampaignRemote(name,websiteId,surveyId);
+            sessionStorage.clear();
+            location.href='campaign-overview.html?id='+encodeURIComponent(row.id);
+          }else{
+            const row=await window.CPStage2.createSurveyRemote(name,websiteId);
+            sessionStorage.clear();
+            location.href='survey-editor.html?id='+encodeURIComponent(row.id);
+          }
+        }catch(err){done();showBackendError('Could not create '+flow.dataset.createKind+': '+err.message)}
+      };
+    }
+
+    // Survey library is dynamically rendered. Capture the click so the
+    // prototype prompt handler never gets a chance to run.
+    document.addEventListener('click',e=>{
+      const surveyCreate=e.target.closest('#createAnotherSurvey,#createFirstSurvey');
+      if(surveyCreate){
+        e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+        location.href='survey-create.html';
+        return;
+      }
+      const campaignNew=e.target.closest('#newCampaignBtn');
+      if(campaignNew){
+        e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+        location.href='campaign-create.html';
+      }
+    },true);
+  }
+
   // -------------------------------------------------------
   // Sync helpers
   // -------------------------------------------------------
@@ -516,6 +625,7 @@
     hydrate().then(session=>{
       if(!session)return;
       installCPBridge();
+      bindTransactionalCreates();
       renderStage2People();
       if(!sessionStorage.getItem(bootKey)){
         sessionStorage.setItem(bootKey,'1');
