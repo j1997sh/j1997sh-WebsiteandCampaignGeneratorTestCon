@@ -130,7 +130,7 @@
     if(!(websitesR.data||[]).some(w=>w.id===active)) active=websitesR.data?.[0]?.id||null;
 
     const local={
-      account:{id:account.id,name:account.name,ownerUserId:account.owner_user_id},
+      account:{id:account.id,name:account.name,firstName:account.first_name||'',lastName:account.last_name||'',ownerUserId:account.owner_user_id},
       activeWebsiteId:active,
       websites:{},campaigns:{},surveys:{},graphics:{},people:{},
       actions:[],surveyResponses:[],integrations:{},history:{}
@@ -935,16 +935,39 @@
 
 
   function applyClientFacingPolish(){
-    document.querySelectorAll('.sidebar-site small').forEach(el=>{
-      el.textContent=(el.textContent||'').replace(/\s*·\s*(Campaign website|campaign_site|Councillor Lite)\s*/gi,'').trim()
+    const d=CP.db(),account=d.account||{};
+    const displayName=account.name||[account.firstName,account.lastName].filter(Boolean).join(' ')||'Signed in user';
+    const initials=displayName.split(/\s+/).filter(Boolean).map(x=>x[0]).join('').slice(0,2).toUpperCase()||'CP';
+
+    document.querySelectorAll('.user-chip').forEach(chip=>{
+      const avatar=chip.querySelector('.avatar');
+      const strong=chip.querySelector('strong');
+      const small=chip.querySelector('small');
+      if(avatar)avatar.textContent=initials;
+      if(strong)strong.textContent=displayName;
+      if(small)small.textContent='Signed in';
     });
+
+    // Selected website remains candidate/site identity, not account-owner identity.
+    document.querySelectorAll('.sidebar-site small,.workspace-select small').forEach(el=>{
+      el.textContent=(el.textContent||'')
+        .replace(/\s*·\s*(Campaign website|campaign_site)\s*/gi,'')
+        .replace(/\s{2,}/g,' ')
+        .trim();
+    });
+
     document.querySelectorAll('.site-card .muted').forEach(el=>{
-      el.textContent=(el.textContent||'').replace(/\s*·\s*(Campaign website|campaign_site|Councillor Lite)\s*/gi,'').trim()
+      el.textContent=(el.textContent||'')
+        .replace(/\s*·\s*(Campaign website|campaign_site)\s*/gi,'')
+        .trim();
     });
+
     document.querySelectorAll('.editor-scope-note').forEach(note=>{
-      const last=note.querySelector('.autosave-standard span:last-child');if(last&&/Supabase/i.test(last.textContent))last.textContent='Saved'
+      const last=note.querySelector('.autosave-standard span:last-child');
+      if(last&&/Supabase/i.test(last.textContent))last.textContent='Saved';
     });
-    document.querySelectorAll('[data-prototype],[data-demo]').forEach(el=>el.remove())
+
+    document.querySelectorAll('[data-prototype],[data-demo]').forEach(el=>el.remove());
   }
 
   // -------------------------------------------------------

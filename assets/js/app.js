@@ -666,7 +666,7 @@ function saveSurveyQuestions(q){localStorage.setItem('cpSurvey:'+cpCurrentSiteId
   document.querySelectorAll('.table-sort').forEach(h=>h.onclick=()=>{const k=h.dataset.sort;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1}sort();render()});
   [['peopleSearch','search'],['filterIssue','issue'],['filterArea','area'],['filterVoting','voting'],['filterVolunteer','volunteer'],['filterSource','source']].forEach(([id,k])=>document.getElementById(id).addEventListener(id==='peopleSearch'?'input':'change',e=>{state[k]=e.target.value;filter()}));
   document.getElementById('clearPeopleFilters').onclick=()=>{Object.keys(state).forEach(k=>state[k]='');syncControls();filter()};
-  document.getElementById('savePeopleView').onclick=()=>{const name=prompt('Name this view');if(!name)return;let views=[];try{views=JSON.parse(localStorage.getItem('cpSavedViews:'+siteId)||'[]')}catch(e){}views.push({name,state:{...state}});localStorage.setItem('cpSavedViews:'+siteId,JSON.stringify(views));renderViews()};
+  document.getElementById('savePeopleView').onclick=async()=>{const name=await CPDialog.ask({title:'Save view',label:'View name',confirm:'Save'});if(!name)return;let views=[];try{views=JSON.parse(localStorage.getItem('cpSavedViews:'+siteId)||'[]')}catch(e){}views.push({name,state:{...state}});localStorage.setItem('cpSavedViews:'+siteId,JSON.stringify(views));renderViews()};
   function renderViews(){let views=[];try{views=JSON.parse(localStorage.getItem('cpSavedViews:'+siteId)||'[]')}catch(e){}const w=document.getElementById('savedViews');w.innerHTML=views.map((v,i)=>`<button class="saved-view-btn" data-view="${i}">${esc(v.name)}</button>`).join('');w.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{Object.assign(state,views[+b.dataset.view].state);syncControls();filter()})}
   const exportBtn=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Export CSV'));if(exportBtn)exportBtn.onclick=()=>{const rows=[['Name','Email','Postcode','Area','Voting intention','Issues','Volunteer','Source','Email consent'],...filtered.map(p=>[p.first+' '+p.last,p.email,p.postcode,p.area,p.voting,p.issues.join('|'),p.volunteer,p.source,p.consent?'Yes':'No'])];const csv=rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='supporters-filtered.csv';a.click()};
   // URL drilldowns
@@ -884,7 +884,7 @@ function cpSelectedSurvey(){
       card.querySelector('.q-down').onclick=()=>{if(i<q.length-1){[q[i+1],q[i]]=[q[i],q[i+1]];saveCurrent();renderBuilder()}}
     })
   }
-  document.getElementById('newSurveyBtn').onclick=()=>{const name=prompt('Survey name','New survey');if(!name)return;const s={id:'survey-'+Date.now(),name,status:'Draft',questions:cpSurveyDefaults(),created:new Date().toISOString()};lib.push(s);cpSaveSurveyLibrary(lib);renderLibrary()};
+  document.getElementById('newSurveyBtn').onclick=async()=>{const name=await CPDialog.ask({title:'New survey',label:'Survey name',value:'New survey',confirm:'Create'});if(!name)return;const s={id:'survey-'+Date.now(),name,status:'Draft',questions:cpSurveyDefaults(),created:new Date().toISOString()};lib.push(s);cpSaveSurveyLibrary(lib);renderLibrary()};
   document.getElementById('backToSurveyLibrary').onclick=()=>{saveCurrent();editorView.style.display='none';libraryView.style.display='block';renderLibrary()};
   document.getElementById('saveSurveyBtn').onclick=()=>{saveCurrent();current.status='Published';cpSaveSurveyLibrary(lib);const b=document.getElementById('saveSurveyBtn');b.textContent='Saved';setTimeout(()=>b.textContent='Save survey',800)};
   document.querySelectorAll('[data-add-q]').forEach(b=>b.onclick=()=>{const t=b.dataset.addQ,labels={text:'Your question',single:'Choose one option',multi:'Choose any that apply',yesno:'Yes or no?',rating:'How would you rate this?',postcode:'What is your postcode?',phone:'What is your phone number?'};q.push({id:'q'+Date.now(),type:t,label:labels[t],enabled:true,options:['Option 1','Option 2','Option 3']});saveCurrent();renderBuilder()});
@@ -927,7 +927,7 @@ function cpSelectedSurvey(){
     grid.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openSurvey(b.dataset.edit));
     grid.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{CP.assignSurvey('website',CP.db().activeWebsiteId,b.dataset.use);renderLibrary()});
     grid.querySelectorAll('[data-dup]').forEach(b=>b.onclick=()=>{CP.duplicate('surveys',b.dataset.dup);renderLibrary()});
-    grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(confirm('Delete this survey?')){CP.remove('surveys',b.dataset.del);renderLibrary()}})
+    grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(await CPDialog.confirm({title:'Delete survey?',message:'This survey will be removed from the library.',confirm:'Delete'})){CP.remove('surveys',b.dataset.del);renderLibrary()}})
   }
   function openSurvey(id){
     const s=CP.get('surveys',id);if(!s)return;
@@ -960,7 +960,7 @@ function cpSelectedSurvey(){
       card.querySelector('.down').onclick=()=>{if(i<working.length-1){[working[i+1],working[i]]=[working[i],working[i+1]];persist();renderBuilder()}}
     })
   }
-  document.getElementById('newSurveyBtn').onclick=()=>{const name=prompt('Survey name','New survey');if(!name)return;const s=CP.createSurvey(name);renderLibrary();openSurvey(s.id)};
+  document.getElementById('newSurveyBtn').onclick=async()=>{const name=await CPDialog.ask({title:'New survey',label:'Survey name',value:'New survey',confirm:'Create'});if(!name)return;const s=CP.createSurvey(name);renderLibrary();openSurvey(s.id)};
   document.getElementById('backToSurveyLibrary').onclick=()=>{editorView.style.display='none';libraryView.style.display='block';renderLibrary()};
   document.getElementById('saveSurveyBtn').onclick=()=>{CP.patch('surveys',currentId,{questions:working,status:'Published'});const b=document.getElementById('saveSurveyBtn');b.textContent='Saved';setTimeout(()=>b.textContent='Save survey',800)};
   document.getElementById('duplicateSurveyBtn').onclick=()=>{const copy=CP.duplicate('surveys',currentId);editorView.style.display='none';libraryView.style.display='block';renderLibrary();if(copy)setTimeout(()=>openSurvey(copy.id),50)};
@@ -977,9 +977,9 @@ function cpSelectedSurvey(){
     const d=CP.db(), campaigns=Object.values(d.campaigns);
     grid.innerHTML=campaigns.map(c=>`<article class="campaign-card"><div class="campaign-preview"></div><span class="status-chip ${c.status==='Published'?'published':'draft'}">${c.status}</span><h3>${c.name}</h3><p class="muted">${c.supporterCount||0} supporters${c.surveyId?' · '+(d.surveys[c.surveyId]?.name||'Survey linked'):''}</p><div class="library-card-actions"><a class="btn small" href="campaign-overview.html?id=${c.id}">Edit</a><button class="btn secondary small" data-dup="${c.id}">Duplicate</button><button class="btn secondary small" data-del="${c.id}">Delete</button><a class="btn secondary small" href="creative-editor.html?template=campaign&campaign=${c.id}">Create graphic</a></div></article>`).join('');
     grid.querySelectorAll('[data-dup]').forEach(b=>b.onclick=()=>{CP.duplicate('campaigns',b.dataset.dup);render()});
-    grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(confirm('Delete this campaign?')){CP.remove('campaigns',b.dataset.del);render()}})
+    grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(await CPDialog.confirm({title:'Delete campaign?',message:'This campaign will be removed from the library.',confirm:'Delete'})){CP.remove('campaigns',b.dataset.del);render()}})
   }
-  document.getElementById('newCampaignBtn').onclick=()=>{const name=prompt('Campaign name','New campaign');if(!name)return;const c=CP.createCampaign(name);location.href='campaign-editor.html?id='+c.id};
+  document.getElementById('newCampaignBtn').onclick=async()=>{const name=await CPDialog.ask({title:'New campaign',label:'Campaign name',value:'New campaign',confirm:'Create'});if(!name)return;const c=CP.createCampaign(name);location.href='campaign-editor.html?id='+c.id};
   render()
 })();
 
@@ -1075,14 +1075,14 @@ function cpSelectedSurvey(){
       CP.duplicate('surveys',btn.dataset.duplicate);
       render();
     });
-    grid.querySelectorAll('[data-delete]').forEach(btn=>btn.onclick=()=>{
-      if(confirm('Delete this survey?')){
+    grid.querySelectorAll('[data-delete]').forEach(btn=>btn.onclick=async()=>{
+      if(await CPDialog.confirm({title:'Delete survey?',message:'This survey will be removed from the library.',confirm:'Delete'})){
         CP.remove('surveys',btn.dataset.delete);
         render();
       }
     });
-    document.getElementById('createAnotherSurvey').onclick=()=>{
-      const name=prompt('Survey name','New survey');
+    document.getElementById('createAnotherSurvey').onclick=async()=>{
+      const name=await CPDialog.ask({title:'New survey',label:'Survey name',value:'New survey',confirm:'Create'});
       if(!name)return;
       const s=CP.createSurvey(name);
       CP.patch('surveys',s.id,{
@@ -1285,12 +1285,12 @@ function cpCreativeSnapshot(){
 
     grid.querySelectorAll('[data-use-survey]').forEach(b=>b.onclick=()=>{CP.assignSurvey('website',d.activeWebsiteId,b.dataset.useSurvey);render()});
     grid.querySelectorAll('[data-duplicate-survey]').forEach(b=>b.onclick=()=>{CP.duplicate('surveys',b.dataset.duplicateSurvey);render()});
-    grid.querySelectorAll('[data-delete-survey]').forEach(b=>b.onclick=()=>{if(confirm('Delete this survey?')){CP.remove('surveys',b.dataset.deleteSurvey);render()}});
+    grid.querySelectorAll('[data-delete-survey]').forEach(b=>b.onclick=async()=>{if(await CPDialog.confirm({title:'Delete survey?',message:'This survey will be removed from the library.',confirm:'Delete'})){CP.remove('surveys',b.dataset.deleteSurvey);render()}});
     document.getElementById('createAnotherSurvey').onclick=createSurvey;
   }
 
-  function createSurvey(){
-    const name=prompt('Survey name','New survey');
+  async function createSurvey(){
+    const name=await CPDialog.ask({title:'New survey',label:'Survey name',value:'New survey',confirm:'Create'});
     if(!name)return;
     const s=CP.createSurvey(name);
     CP.patch('surveys',s.id,{questions:[
@@ -1549,7 +1549,7 @@ CP.switchWebsite=function(id){CP.setActiveWebsite(id);localStorage.setItem('cpCu
     grid.querySelectorAll('[data-switch-website]').forEach(b=>b.onclick=()=>{CP.switchWebsite(b.dataset.switchWebsite);render()});
     grid.querySelectorAll('[data-duplicate-website]').forEach(b=>b.onclick=()=>{CP.duplicate('websites',b.dataset.duplicateWebsite);render()});
     grid.querySelectorAll('[data-archive-website]').forEach(b=>b.onclick=()=>{const w=CP.get('websites',b.dataset.archiveWebsite);w.status==='Archived'?CP.restore('websites',w.id):CP.archive('websites',w.id);render()});
-    grid.querySelectorAll('[data-delete-website]').forEach(b=>b.onclick=()=>{const id=b.dataset.deleteWebsite,w=CP.get('websites',id);if(!confirm(`Delete ${w.name}?`))return;const backup=CP.softDelete('websites',id);CPUndo('Website deleted',()=>{CP.put('websites',backup);render()});render()})
+    grid.querySelectorAll('[data-delete-website]').forEach(b=>b.onclick=async()=>{const id=b.dataset.deleteWebsite,w=CP.get('websites',id);if(!await CPDialog.confirm({title:'Delete website?',message:`${w.name} will be removed.`,confirm:'Delete'}))return;const backup=CP.softDelete('websites',id);CPUndo('Website deleted',()=>{CP.put('websites',backup);render()});render()})
   }
   function bindMenus(){
     grid.querySelectorAll('[data-menu-button]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();grid.querySelectorAll('.entity-menu').forEach(m=>m.classList.remove('open'));grid.querySelector(`[data-menu="${btn.dataset.menuButton}"]`)?.classList.toggle('open')});
@@ -1602,9 +1602,9 @@ CP.switchWebsite=function(id){CP.setActiveWebsite(id);localStorage.setItem('cpCu
   const rel=CP.relationships('graphic',id);
   root.innerHTML=`<div class="overview-head"><div><span class="status-chip draft">Saved</span><h2 style="margin:9px 0 5px" id="graphicName">${g.title||'Campaign graphic'}</h2><p class="muted">${g.format||'square'} · ${g.type||'graphic'}</p></div><div class="overview-actions"><a class="btn small" href="creative-editor.html?template=${g.type||'announcement'}&saved=${g.id}">Edit graphic</a><button class="btn secondary small" id="renameGraphic">Rename</button><button class="btn secondary small" id="duplicateGraphic">Duplicate</button><button class="btn secondary small" id="deleteGraphic">Delete</button></div></div>
   <div class="overview-grid"><section class="panel"><h3>Preview</h3>${g.preview?`<img src="${g.preview}" style="display:block;max-width:420px;width:100%">`:'<div class="empty-state-card compact"><p>Preview unavailable for this older graphic.</p></div>'}</section><section class="panel"><h3>Linked to</h3><div class="overview-list"><div class="overview-item"><div><strong>Website</strong><small>${rel.website?.name||'Not linked'}</small></div>${rel.website?`<a class="btn secondary small" href="website-overview.html?id=${rel.website.id}">Open</a>`:''}</div><div class="overview-item"><div><strong>Campaign</strong><small>${rel.campaign?.name||'Not linked'}</small></div>${rel.campaign?`<a class="btn secondary small" href="campaign-overview.html?id=${rel.campaign.id}">Open</a>`:''}</div></div></section></div>`;
-  document.getElementById('renameGraphic').onclick=()=>{const n=prompt('Graphic name',g.title||'Campaign graphic');if(n){CP.patch('graphics',id,{title:n});location.reload()}};
+  document.getElementById('renameGraphic').onclick=async()=>{const n=await CPDialog.ask({title:'Rename graphic',label:'Graphic name',value:g.title||'Campaign graphic',confirm:'Rename'});if(n){CP.patch('graphics',id,{title:n});location.reload()}};
   document.getElementById('duplicateGraphic').onclick=()=>{const c=CP.duplicate('graphics',id);if(c)location.href='creative-overview.html?id='+c.id};
-  document.getElementById('deleteGraphic').onclick=()=>{if(!confirm('Delete this graphic?'))return;const backup=CP.softDelete('graphics',id);CPUndo('Graphic deleted',()=>CP.put('graphics',backup));location.href='creative.html'}
+  document.getElementById('deleteGraphic').onclick=async()=>{if(!await CPDialog.confirm({title:'Delete graphic?',message:'This graphic will be removed.',confirm:'Delete'}))return;const backup=CP.softDelete('graphics',id);CPUndo('Graphic deleted',()=>CP.put('graphics',backup));location.href='creative.html'}
 })();
 
 /* STANDARD LIBRARY ACTION MENUS FOR CAMPAIGNS/SURVEYS/CREATIVE */
@@ -1620,7 +1620,7 @@ CP.switchWebsite=function(id){CP.setActiveWebsite(id);localStorage.setItem('cpCu
         card.prepend(wrap);const menu=wrap.querySelector('.entity-menu');wrap.querySelector('button').onclick=e=>{e.stopPropagation();menu.classList.toggle('open')};
         menu.querySelector('[data-a="dup"]').onclick=()=>{CP.duplicate('campaigns',id);location.reload()};
         menu.querySelector('[data-a="archive"]').onclick=()=>{CP.archive('campaigns',id);location.reload()};
-        menu.querySelector('[data-a="delete"]').onclick=()=>{if(confirm('Delete campaign?')){const backup=CP.softDelete('campaigns',id);CPUndo('Campaign deleted',()=>CP.put('campaigns',backup));location.reload()}};
+        menu.querySelector('[data-a="delete"]').onclick=async()=>{if(await CPDialog.confirm({title:'Delete campaign?',message:'This campaign will be removed.',confirm:'Delete'})){const backup=CP.softDelete('campaigns',id);CPUndo('Campaign deleted',()=>CP.put('campaigns',backup));location.reload()}};
       })
     },80)
   }
@@ -1679,9 +1679,3 @@ window.CPDialog = {
   }
 };
 
-if(window.CP_STAGE2){
-  window.prompt = function(label, value){
-    console.warn('Legacy prompt prevented:', label);
-    return null;
-  };
-}
