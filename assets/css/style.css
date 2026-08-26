@@ -1006,3 +1006,77 @@ table tbody tr:hover{background:#f8fbfe!important}
   .auth-heading h1{font-size:30px}
   .signup-name-grid{grid-template-columns:1fr}
 }
+
+/* Sidebar — return to the earlier, simpler Campaign Platform treatment */
+.app-sidebar{
+  background:#0a315d!important;
+}
+.side-nav{
+  padding:8px 0!important;
+  gap:0!important;
+}
+.side-nav a{
+  border-radius:0!important;
+  padding:12px 20px!important;
+  margin:0!important;
+  font-size:14px!important;
+  font-weight:800!important;
+  background:transparent!important;
+  color:rgba(255,255,255,.88)!important;
+  box-shadow:none!important;
+}
+.side-nav a:before{display:none!important}
+.side-nav a:hover{
+  background:rgba(255,255,255,.045)!important;
+}
+.side-nav a.active{
+  background:#123f70!important;
+  color:#fff!important;
+  box-shadow:inset 3px 0 0 #34a7ff!important;
+}
+.workspace-select{
+  border-radius:0!important;
+  background:rgba(255,255,255,.035)!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+}
+.brand .brand-mark{border-radius:0!important}
+.logout-link{color:#fff!important;padding:10px 12px!important;text-decoration:none}
+.website-editor-page{max-width:none!important}
+.website-editor-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.website-editor-shell{display:grid;grid-template-columns:minmax(0,1fr) 390px;min-height:760px;border:1px solid var(--line);background:#e5ebf1;overflow:hidden}
+.website-editor-canvas{padding:20px;display:flex;justify-content:center;overflow:auto}
+.website-device{position:relative;background:#fff;transition:width .2s ease;box-shadow:0 12px 35px rgba(9,38,74,.12)}
+.website-device.desktop{width:100%;max-width:1180px}.website-device.tablet{width:760px;max-width:100%}.website-device.mobile{width:390px;max-width:100%}
+.website-device iframe{display:block;width:100%;border:0;min-height:760px;background:#fff}
+.website-hotspot-layer{position:absolute;inset:0 0 auto 0;pointer-events:none}
+.website-editor-hotspot{position:absolute;border:2px solid transparent;background:transparent;pointer-events:auto;cursor:pointer}
+.website-editor-hotspot:hover{border-color:#1688f5;background:rgba(22,136,245,.03)}
+.website-editor-hotspot span{display:none;position:absolute;left:8px;top:8px;background:#1688f5;color:#fff;padding:6px 8px;font-size:11px;font-weight:900}
+.website-editor-hotspot:hover span{display:block}
+.website-editor-panel{background:#fff;border-left:1px solid var(--line);padding:20px;overflow:auto}
+.website-editor-panel .field{margin-bottom:14px}.website-editor-panel textarea{min-height:92px}
+@media(max-width:960px){.website-editor-shell{grid-template-columns:1fr}.website-editor-panel{border-left:0;border-top:1px solid var(--line)}}
+
+.btn.danger-outline{
+  background:#fff!important;
+  color:#9b2c25!important;
+  border:1px solid #e2b7b2!important;
+}
+.btn.danger-outline:hover{
+  background:#fff8f7!important;
+  border-color:#c97c74!important;
+  box-shadow:none!important;
+}
+.btn.danger{
+  background:#b43b32!important;
+  border-color:#b43b32!important;
+  color:#fff!important;
+}
+.cp-dialog-backdrop{
+  position:fixed;inset:0;background:rgba(4,24,48,.45);display:grid;place-items:center;
+  z-index:999999;padding:20px;backdrop-filter:blur(3px)
+}
+.cp-dialog{width:min(460px,100%);background:#fff;border-radius:10px;box-shadow:0 24px 70px rgba(0,0,0,.2);padding:20px}
+.cp-dialog-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.cp-dialog-head h3{margin:0;font-size:22px}.cp-dialog-x{border:0;background:transparent;font-size:24px;cursor:pointer;color:#738197}
+.cp-dialog-message{color:#617289;line-height:1.5}.cp-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}

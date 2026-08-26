@@ -1,62 +1,58 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Website | Campaign Platform</title><link rel="stylesheet" href="assets/css/style.css?v=20260826-centered-auth"></head>
-<body class="app-body visual-editor-page"><div class="app-shell"><aside class="app-sidebar">
-      <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Workspace</small></span></div>
-      <div class="workspace-select"><strong id="sidebarSiteName">Joe Bloggs</strong><small id="sidebarSiteMeta">Bloggs Ward</small></div>
-      <nav class="side-nav"><a href="dashboard.html">Dashboard</a><a class="active" href="websites.html">Websites</a><a href="campaigns.html">Campaigns</a><a href="creative.html">Creative</a><a href="people.html">People</a><a href="surveys.html">Surveys</a><a href="domains.html">Domains</a><a href="integrations.html">Integrations</a><a href="settings.html">Settings</a></nav>
-      <div class="side-bottom"><div class="user-chip"><span class="avatar">JB</span><span><strong>Joe Bloggs</strong><small>Signed in</small></span></div><a class="side-nav logout-link" style="padding:10px 12px;display:block" href="login.html" id="logoutLink">Log out</a></div>
-    </aside><main class="app-main">
-<header class="app-topbar"><h1>Website</h1>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="global-search-wrap">
-            <input class="global-search-input" id="globalSearchInput" placeholder="Search people or websites">
-            <span class="global-search-kbd">⌘K</span>
-            <div class="search-popover" id="globalSearchPopover"></div>
-          </div>
-          <a class="btn secondary small" href="websites.html">All websites</a>
-        </div></header>
-<div class="app-content"><div class="editor-scope-note"><strong>Website editor</strong><span>Edits the main campaign website only.</span><span class="autosave-standard"><span class="dot"></span><span>Saved</span></span></div>
-<div class="visual-editor-shell">
-    <div class="mobile-admin-note">The CRM and dashboard work well on mobile. Website editing is designed for desktop or tablet.</div>
-  <div class="visual-editor-bar">
-    <div class="visual-editor-left">
-      <label class="field visual-site-switch"><span>Editing website</span><select id="visualSiteSwitcher"><option value="joe-bloggs">Joe Bloggs — Bloggs Ward</option><option value="sarah-jones">Sarah Jones — North Bloggs</option></select></label>
-      <div class="visual-status" id="visualStatus"><span class="dot"></span><span id="visualStatusText">Published</span></div><div class="autosave-indicator" id="autosaveIndicator"><span class="save-dot"></span><span id="autosaveText">Saved just now</span></div>
-    </div>
-    <div class="visual-editor-right">
-      <div class="viewport-switcher"><button type="button" class="active" data-visual-mode="desktop">Desktop</button><button type="button" data-visual-mode="tablet">Tablet</button><button type="button" data-visual-mode="mobile">Mobile</button></div>
-      <button class="btn secondary small" id="visualSaveBtn" type="button">Save draft</button>
-      <button class="btn secondary small" id="visualPreviewBtn" type="button">Preview</button>
-      <button class="btn secondary small" id="visualExportBtn" type="button">Export ZIP</button>
-      <button class="btn small" id="visualPublishBtn" type="button">Publish</button>
-    </div>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Website editor | Campaign Platform</title>
+<link rel="stylesheet" href="assets/css/style.css?v=20260826-campaign-delete">
+</head>
+<body class="app-body">
+<div class="app-shell">
+<aside class="app-sidebar">
+  <div class="brand"><span class="brand-mark">CP</span><span><strong>Campaign Platform</strong><small>Workspace</small></span></div>
+  <div class="workspace-select" id="websiteSidebarIdentity"><strong>Website</strong><small>Loading…</small></div>
+  <nav class="side-nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a class="active" href="websites.html">Websites</a>
+    <a href="campaigns.html">Campaigns</a>
+    <a href="creative.html">Creative</a>
+    <a href="people.html">People</a>
+    <a href="surveys.html">Surveys</a>
+    <a href="domains.html">Domains</a>
+    <a href="integrations.html">Integrations</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+  <div class="side-bottom"><div class="user-chip" id="websiteEditorUser"><span class="avatar">—</span><span><strong>Signed in</strong><small>Account</small></span></div><a class="logout-link" id="websiteEditorLogout" href="login.html">Log out</a></div>
+</aside>
+<main class="app-main">
+<header class="app-topbar">
+  <div><small class="app-topbar-kicker">Website</small><h1 id="weTopTitle">Editor</h1></div>
+  <div class="button-row"><a class="btn secondary small" href="websites.html">All websites</a><button class="btn secondary small" id="wePreviewButton">Preview</button><button class="btn small" id="wePublishButton">Publish</button></div>
+</header>
+<div class="app-content website-editor-page">
+  <div class="editor-scope-note"><strong>Website editor</strong><span>Edit the main candidate website.</span><span class="autosave-standard" id="weSaveState"><span class="dot"></span><span>Saved</span></span></div>
+  <div class="website-editor-toolbar">
+    <a class="text-button" id="weBackLink" href="websites.html">← Back to website</a>
+    <div class="campaign-editor-view-switch"><button class="view-chip active" data-we-width="desktop">Desktop</button><button class="view-chip" data-we-width="tablet">Tablet</button><button class="view-chip" data-we-width="mobile">Mobile</button></div>
   </div>
-  <div class="site-health-grid" style="margin:10px 18px 0">
-    <div class="site-health-item"><strong class="health-ok">Site live</strong><small id="healthPublished">Published</small></div>
-    <div class="site-health-item"><strong class="health-ok">Domain connected <span class="help-tip" data-help="domain">?</span></strong><small>Platform URL active</small></div>
-    <div class="site-health-item"><strong class="health-ok">Forms working</strong><small>Survey + signup enabled</small></div>
-    <div class="site-health-item"><strong id="healthDraft" class="health-ok">No unpublished changes</strong><small><button class="text-button" id="openHistoryBtn" type="button">Publish history</button></small></div>
-  </div>
-  <div class="visual-editor-workspace" id="visualWorkspace">
-    <div class="visual-stage">
-      <div class="visual-canvas desktop" id="visualCanvas">
-        <iframe class="visual-render" id="visualFrame" title="Editable website"></iframe>
-        <div class="visual-overlay-layer" id="visualOverlay"></div>
+  <div id="weError" class="state-banner error" hidden></div>
+  <div class="website-editor-shell">
+    <section class="website-editor-canvas">
+      <div class="website-device desktop" id="weDevice">
+        <iframe id="weFrame" title="Website preview"></iframe>
+        <div id="weHotspots" class="website-hotspot-layer"></div>
       </div>
-    </div>
-    <aside class="drawer" id="editDrawer">
-      <div class="drawer-head"><h2 id="drawerTitle">Edit section</h2><button class="icon-button" id="drawerCloseBtn" type="button">Close</button></div>
-      <div class="drawer-body" id="drawerBody"></div>
+    </section>
+    <aside class="website-editor-panel">
+      <div id="wePanelEmpty" class="campaign-panel-empty"><h3>Edit your website</h3><p>Click any section in the preview to edit it.</p><div id="weSummary" class="campaign-editor-summary"></div></div>
+      <div id="wePanelContent" hidden></div>
     </aside>
   </div>
 </div>
+</main>
 </div>
-</main></div>
-
-
-<div class="preview-overlay" id="previewOverlay"><div class="preview-overlay-toolbar"><strong>Site preview</strong><button class="btn secondary small" id="previewOverlayClose">Close</button></div><iframe class="preview-overlay-frame same-render" id="previewOverlayFrame"></iframe></div>
-<div class="modal-backdrop" id="publishModal"><div class="modal"><h2>Publish changes?</h2><p class="muted">This will make the current draft live.</p><div class="modal-actions"><button class="btn secondary" id="publishCancel">Cancel</button><button class="btn" id="publishConfirm">Publish now</button></div></div></div>
-<div class="visual-toast" id="visualToast"></div>
-<div class="undo-toast" id="undoToast"><span id="undoText">Change made</span><button id="undoBtn" type="button">Undo</button></div>
-<div class="modal-backdrop" id="historyModal"><div class="modal"><h2>Publish history</h2><p class="muted">Previous versions of this website.</p><div class="history-list" id="historyList"></div><div class="modal-actions"><button class="btn secondary" id="historyCloseBtn">Close</button></div></div></div>
-<div class="help-pop" id="helpPop"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/js/supabase-config.js?v=20260826-centered-auth"></script><script src="assets/js/app.js?v=20260826-centered-auth"></script><script src="assets/js/supabase-backend.js?v=20260826-centered-auth"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-config.js?v=20260826-website-editor-fix"></script>
+<script src="assets/js/website-editor-stage2.js?v=20260826-website-editor-fix"></script>
+</body>
+</html>
